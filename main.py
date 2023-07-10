@@ -182,6 +182,7 @@ for filename in html_files:
 
     # 新建一个list存储修改的数据
     final_list = connect_data(nested_tables_data)
+    final_list[1] = title_data[6][0]
 
     # 创建一个新的 DataFrame 来存储嵌套数据
     df = pd.DataFrame(final_list)
