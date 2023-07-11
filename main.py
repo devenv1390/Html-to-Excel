@@ -73,21 +73,11 @@ def replace_at_symbol(lst):
     for item in lst:
         if isinstance(item, list):
             result.append(replace_at_symbol(item))
-        elif isinstance(item, str) and item == '@':
-            result.append('/')
+        elif isinstance(item, str) and item == '<br>' and item == '</br>':
+            result.append(';')
         else:
             result.append(item)
     return result
-
-
-def flatten_list(lst):
-    flattened = []
-    for item in lst:
-        if isinstance(item, list):
-            flattened.extend(flatten_list(item))
-        else:
-            flattened.append(str(item))
-    return flattened
 
 
 # 处理数据，合并成一个list
@@ -118,7 +108,18 @@ def connect_data(table):
     return final_data
 
 
+def count_element(lst, target):
+    count = 0
+    for item in lst:
+        if isinstance(item, list):
+            count += count_element(item, target)  # 递归调用处理嵌套列表
+        elif item == target:
+            count += 1
+    return count
+
+
 def fill_cell(ws):
+    prev_row_values = []  # 用于存储上一行的值
     for row in ws.rows:
         for cell in row:
             cell.alignment = alignment
@@ -146,6 +147,11 @@ def fill_cell(ws):
                             cell.font = header_font
                             cell.fill = blue_fill
                             cell.border = thin_border
+                    for header_value in ['序号', '题号', '测试大类项目名称', '大类项目测试结果']:
+                        if header_value in prev_row_values:
+                            cell.font = header_font
+        # 更新上一行的值
+        prev_row_values = [cell.value for cell in row]
 
 
 # 获取 input 文件夹下的所有 HTML 文件
@@ -176,13 +182,32 @@ for filename in html_files:
         temp_data = process_table(table)
         nested_temp_data.append(temp_data)
 
-    title_data = nested_temp_data[8]
-    title_data.append([' '])
-    title_data.append(nested_temp_data[9])
+    # 算通过、不通过、没测试
+    total = len(nested_temp_data[9])
+    warning_number = count_element(nested_temp_data[9], 'warning')
+    fail_number = count_element(nested_temp_data[9], 'fail')
+    pass_number = total - fail_number - warning_number
+    complete_number = pass_number + fail_number
+
+    per_complete = round(complete_number / total, 2) * 100
+    per_not_complete = 100 - per_complete
+    per_pass = round(pass_number / total, 2) * 100
+    per_fail = round(fail_number / total, 2) * 100
+
+    str_pre_complete = per_complete.__str__() + "%"
+    str_per_not_complete = per_not_complete.__str__() + "%"
+    str_per_pass = per_pass.__str__() + "%"
+    str_per_fail = per_fail.__str__() + "%"
+
+    title_data = [['测试项目总数', total, ''], ['已完成的测试项目', complete_number, "完成率" + str_pre_complete],
+                  ['未完成的测试', warning_number, "未完成率" + str_per_not_complete],
+                  ['通过的测试数量', pass_number, "通过率" + str_per_pass],
+                  ['未通过的测试数量', fail_number, "未通过率" + str_per_fail], [' '], nested_temp_data[9]]
 
     # 新建一个list存储修改的数据
     final_list = connect_data(nested_tables_data)
     final_list[1] = title_data[6][0]
+    final_list = replace_at_symbol(final_list)
 
     # 创建一个新的 DataFrame 来存储嵌套数据
     df = pd.DataFrame(final_list)
