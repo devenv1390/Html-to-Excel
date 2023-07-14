@@ -4,11 +4,20 @@ from bs4 import BeautifulSoup
 
 # 工具
 from tools import find_text_with_fill_table, process_nested_table, process_table, count_element, connect_data, \
-    replace_at_symbol
+    replace_at_symbol, find_text_with_read_table
 
 # 创建 output 文件夹（如果不存在）
 if not os.path.exists('output'):
     os.makedirs('output')
+
+
+def print_nested_list(nested_list, indent=0):
+    for item in nested_list:
+        # if isinstance(item, list):
+        #     print_nested_list(item, indent + 1)
+        # else:
+        print('\t' * indent + str(item))
+
 
 # 获取 input 文件夹下的所有 HTML 文件
 html_files = os.listdir('html_input')
@@ -66,15 +75,31 @@ for filename in html_files:
     final_list = connect_data(nested_tables_data)
     final_list[1] = title_data[6][0]
     final_list = replace_at_symbol(final_list)
+    # print("final_list")
+    # print_nested_list(title_data)
+    # print("------------------------------------")
+    # print("nested_list")
+    # print_nested_list(title_data)
 
-    # 指定要搜索的文本和数据列表
-    target_text = "6.1.2"
-    data_list = [["哈哈哈哈3.51V", "OK"], ["1.51V", "NOK"], ["2.00V", "N/A"], ["2.51V", "NOK"]]
+    # # 使用循环遍历找到包含特定字符串的元素
+    # my_list = title_data
+    # search_string = 'warning'
+    # matching_elements = []
+    # for elements in my_list:
+    #     for element in elements:
+    #         if search_string in element:
+    #             matching_elements.append(elements)
+    #
+    # print(f"Matching elements: {matching_elements}")
 
+    find_text_with_read_table(model_input_filepath, "测试项目总览")
+
+    # # 指定要搜索的文本和数据列表
+    # target_text = "6.1.2"
+    # data_list = [["哈哈哈哈3.51V", "OK"], ["1.51V", "NOK"], ["2.00V", "N/A"], ["2.51V", "NOK"]]
+    # table_type = 0
     # # 执行搜索并填充表格
-    find_text_with_fill_table(model_input_filepath, target_text, data_list, output_filepath)
-
-
+    # find_text_with_fill_table(model_input_filepath, target_text, data_list, output_filepath,table_type)
 
 print("------ 已处理完成所有文件 ------")
 # os.system("pause")
