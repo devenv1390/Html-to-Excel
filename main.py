@@ -11,18 +11,20 @@ if not os.path.exists('output'):
     os.makedirs('output')
 
 # 获取 input 文件夹下的所有 HTML 文件
-html_files = os.listdir('input')
+html_files = os.listdir('html_input')
+docx_file = os.listdir('model_input')
 print("------ 共有" + len(html_files).__str__() + "个文件待处理 ------")
 i = 1
 for filename in html_files:
     print("------ 正在处理第" + i.__str__() + "个文件 ------")
     i += 1
     # 拼接文件路径
-    input_filepath = os.path.join('input', filename)
-    output_filepath = os.path.join('output', filename.replace('.html', '.xlsx'))
+    html_input_filepath = os.path.join('html_input', filename)
+    model_input_filepath = os.path.join('model_input', "高速CAN单节点测试报告模板.docx")
+    output_filepath = os.path.join('output', filename.replace('.html', '.docx'))
 
     # 读取 HTML 文件
-    with open(input_filepath, 'r', encoding='utf-8') as file:
+    with open(html_input_filepath, 'r', encoding='utf-8') as file:
         html_content = file.read()
 
     # 使用 BeautifulSoup 解析 HTML
@@ -65,15 +67,14 @@ for filename in html_files:
     final_list[1] = title_data[6][0]
     final_list = replace_at_symbol(final_list)
 
+    # 指定要搜索的文本和数据列表
+    target_text = "6.1.2"
+    data_list = [["哈哈哈哈3.51V", "OK"], ["1.51V", "NOK"], ["2.00V", "N/A"], ["2.51V", "NOK"]]
+
+    # # 执行搜索并填充表格
+    find_text_with_fill_table(model_input_filepath, target_text, data_list, output_filepath)
+
+
+
 print("------ 已处理完成所有文件 ------")
 # os.system("pause")
-
-
-# 指定要搜索的文本、文档路径和数据列表
-target_text = "6.1.2"
-docx_file = "template.docx"
-column_widths = [1.76, 3.53, 5.29, 3.53, 2.47]
-data_list = [["哈哈哈哈3.51V", "OK"], ["1.51V", "NOK"], ["2.00V", "N/A"], ["2.51V", "NOK"]]
-
-# 执行搜索并填充表格
-find_text_with_fill_table(docx_file, target_text, data_list)

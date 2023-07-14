@@ -1,3 +1,4 @@
+import docx2txt as docx2txt
 from docx import Document
 from docx.enum.table import WD_CELL_VERTICAL_ALIGNMENT
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
@@ -7,85 +8,90 @@ from docx.shared import Pt, RGBColor
 
 
 # 填充word表格
-def find_text_with_fill_table(docx_file, target_text, data_list):
+def find_text_with_fill_table(docx_file, target_text, data_list, file_path):
     doc = Document(docx_file)
     found_text = False
 
-    for paragraph in doc.paragraphs:
-        if target_text in paragraph.text:
-            found_text = True
-        elif found_text:
-            print(f"找到匹配的文本 '{target_text}' 在段落: {paragraph.text}")
-            found_text = False
+    paragraphs = doc.paragraphs
+    all_tables = doc.tables
+    target_text = target_text.encode('utf-8').decode('utf-8')
+    for aPara in paragraphs:
+        if target_text in aPara.text:
+            ele = aPara._p.getnext()
+            while ele.tag != '' and ele.tag[-3:] != 'tbl':
+                ele = ele.getnext()
+            if ele.tag != '':
+                for table in all_tables:
+                    if table._tbl == ele:
+                        table.autofit = False
+                        for row_index, row in enumerate(table.rows):
+                            for col_index, cell in enumerate(row.cells):
+                                if row_index >= 2 and row_index - 2 < len(data_list):
+                                    if col_index == 2:
+                                        cell.text = str(data_list[row_index - 2][0])
 
-    for table in doc.tables:
-        table.autofit = False
-        if found_text:
-            for row_index, row in enumerate(table.rows):
-                for col_index, cell in enumerate(row.cells):
-                    if row_index >= 2 and row_index - 2 < len(data_list):
-                        if col_index == 2:
-                            cell.text = str(data_list[row_index - 2][0])
+                                        cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER  # 设置单元格垂直居中对齐
 
-                            cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER  # 设置单元格垂直居中对齐
+                                        # 遍历单元格内的段落并设置水平居中对齐
+                                        for paragraph in cell.paragraphs:
+                                            paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER  # 设置段落水平居中对齐
+                                            cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER  # 设置单元格垂直居中对齐
+                                            paragraph.paragraph_format.widow_control = True  # 设置自动换行
+                                            run = paragraph.runs[0]
+                                            run.font.size = Pt(10.5)
 
-                            # 遍历单元格内的段落并设置水平居中对齐
-                            for paragraph in cell.paragraphs:
-                                paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER  # 设置段落水平居中对齐
-                                cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER  # 设置单元格垂直居中对齐
-                                paragraph.paragraph_format.widow_control = True  # 设置自动换行
-                                run = paragraph.runs[0]
-                                run.font.size = Pt(10.5)
+                                            # 遍历段落内的run，并设置字体
+                                            for run in paragraph.runs:
+                                                for char in run.text:
+                                                    if 0x4E00 <= ord(char) <= 0x9FFF:
+                                                        # 中文设置为宋体
+                                                        run.font.name = '宋体'
+                                                    else:
+                                                        # 英文、数字和符号设置为Times New Roman
+                                                        run.font.name = 'Times New Roman'
 
-                                # 遍历段落内的run，并设置字体
-                                for run in paragraph.runs:
-                                    for char in run.text:
-                                        if 0x4E00 <= ord(char) <= 0x9FFF:
-                                            # 中文设置为宋体
-                                            run.font.name = '宋体'
-                                        else:
-                                            # 英文、数字和符号设置为Times New Roman
+                                    elif col_index == 4:
+                                        cell.text = data_list[row_index - 2][1]
+
+                                        # 设置垂直居中对齐
+                                        cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
+                                        content = cell.text.strip()
+
+                                        shading_color = None  # 默认为无色
+                                        if content == "OK":
+                                            shading_color = RGBColor(0, 128, 0)  # 绿色
+                                        elif content == "NOK":
+                                            shading_color = RGBColor(255, 0, 0)  # 红色
+                                        elif content == "N/A":
+                                            shading_color = RGBColor(255, 255, 255)  # 白色
+
+                                        # 添加或修改单元格的背景色
+                                        if shading_color is not None:
+                                            if cell._element.tcPr is None:
+                                                cell._element.tcPr = parse_xml(f'<w:tcPr {nsdecls("w")}/>')
+                                            shading_element = parse_xml(
+                                                f'<w:shd {nsdecls("w")} w:fill="{shading_color}"/>')
+                                            cell._element.tcPr.append(shading_element)
+
+                                        # 遍历单元格内的段落并设置水平居中对齐
+                                        for paragraph in cell.paragraphs:
+                                            paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+                                            run = paragraph.runs[0]
+                                            run.font.size = Pt(10.5)
                                             run.font.name = 'Times New Roman'
 
-                        elif col_index == 4:
-                            cell.text = data_list[row_index - 2][1]
+                                print(cell.text)
+                        break
 
-                            # 设置垂直居中对齐
-                            cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
-                            content = cell.text.strip()
+                    for row in table.rows:
+                        for cell in row.cells:
+                            if target_text in cell.text:
+                                found_text = True
+                                break
+                        if found_text:
+                            break
 
-                            shading_color = None  # 默认为无色
-                            if content == "OK":
-                                shading_color = RGBColor(0, 128, 0)  # 绿色
-                            elif content == "NOK":
-                                shading_color = RGBColor(255, 0, 0)  # 红色
-
-                            # 添加或修改单元格的背景色
-                            if shading_color is not None:
-                                if cell._element.tcPr is None:
-                                    cell._element.tcPr = parse_xml(f'<w:tcPr {nsdecls("w")}/>')
-                                shading_element = parse_xml(f'<w:shd {nsdecls("w")} w:fill="{shading_color}"/>')
-                                cell._element.tcPr.append(shading_element)
-
-                            # 遍历单元格内的段落并设置水平居中对齐
-                            for paragraph in cell.paragraphs:
-                                paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
-                                run = paragraph.runs[0]
-                                run.font.size = Pt(10.5)
-                                run.font.name = 'Times New Roman'
-
-                    print(cell.text)
-            break
-
-        for row in table.rows:
-            for cell in row.cells:
-                if target_text in cell.text:
-                    found_text = True
-                    break
-            if found_text:
-                break
-
-    doc.save("filled_document.docx")
+    doc.save(file_path)
 
 
 # 解析HTML中的表格信息
