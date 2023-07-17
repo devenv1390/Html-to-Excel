@@ -109,32 +109,32 @@ for filename in html_files:
     # str_per_pass = per_pass.__str__() + "%"
     # str_per_fail = per_fail.__str__() + "%"
 
-    # nested_tables_data = []
-    # nested_temp_data = []
-    #
-    # data_list = get_list_from_final(final_list)
-    #
-    # # 指定要搜索的文本和数据列表
-    # title_target_text = "测试项目总览"
-    # find_text_with_fill_title(model_input_filepath, title_target_text, title_data, output_filepath)
-    #
-    # # 执行搜索并填充表格
-    # j = 1
-    # print("------ 共有" + len(data_list).__str__() + "个测试数据待处理 ------")
-    # for data in data_list:
-    #     target_text = data[0][0].split("@")[0]
-    #     temp_data = []
-    #     for _data_index, _data in enumerate(data):
-    #         if _data_index == 0:
-    #             continue
-    #         else:
-    #             temp_data.append(_data)
-    #     find_text_with_fill_table(output_filepath, target_text, temp_data, output_filepath, j)
-    #     j += 1
-    #
-    # print("------ 完成第" + i.__str__() + "个文件的处理 ------")
-    # i += 1
-    # print(" ")
+    nested_tables_data = []
+    nested_temp_data = []
+
+    data_list = get_list_from_final(final_list)
+
+    # 指定要搜索的文本和数据列表
+    title_target_text = "测试项目总览"
+    find_text_with_fill_title(model_input_filepath, title_target_text, title_data, output_filepath)
+
+    # 执行搜索并填充表格
+    j = 1
+    print("------ 共有" + len(data_list).__str__() + "个测试数据待处理 ------")
+    for data in data_list:
+        target_text = data[0][0].split("@")[0]
+        temp_data = []
+        for _data_index, _data in enumerate(data):
+            if _data_index == 0:
+                continue
+            else:
+                temp_data.append(_data)
+        find_text_with_fill_table(output_filepath, target_text, temp_data, output_filepath, j)
+        j += 1
+
+    print("------ 完成第" + i.__str__() + "个文件的处理 ------")
+    i += 1
+    print(" ")
 
 print("------ 已处理完成所有文件 ------")
 # os.system("pause")

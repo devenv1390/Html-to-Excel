@@ -15,13 +15,16 @@ def fill_title_table(table, data_list):
             if col_index == 2:
                 for data_index, data in enumerate(data_list):
                     if table.cell(row_index, col_index - 1).text in data[2]:
-                        if data[4] == 'warning':
-                            cell.text = "N/A"
-                        else:
-                            if data[3] == 'pass':
-                                cell.text = "OK"
+                        if len(data) > 4:
+                            if data[4] == 'warning':
+                                cell.text = "N/A"
                             else:
-                                cell.text = "NOK"
+                                if data[3] == 'pass':
+                                    cell.text = "OK"
+                                else:
+                                    cell.text = "NOK"
+                        else:
+                            cell.text = "N/A"
                         data_list.pop(data_index)
                 if cell.text != 'AUTOSAR网络管理测试' and cell.text != '物理层测试' and cell.text != '数据链路层测试' and cell.text != '网络管理测试' and cell.text != '应用层测试':
                     if cell.text == '':
@@ -313,22 +316,26 @@ def connect_data_type_one(table, title_data):
     flag_count = 0  # 计数，第几个测试项目
     for cell in table:
         for _cell_index, _cell in enumerate(cell):
-            if _cell == 'Timestamp':
-                temp_data = cell
-                final_data.append(['序号', '题号', '测试大类项目名称', '大类项目测试结果'])
-                if len(title_data[flag_count]) > 4:
-                    title_data[flag_count].pop()
-                    final_data.append(title_data[flag_count])
-                else:
-                    final_data.append(title_data[flag_count])
-                flag_count += 1
-                final_data.append(['测试项目', '测试标准', '测试数值', '测试结果'])
-                for i in range(4, len(temp_data) + 1, 4):
-                    temp_cell_data = temp_data[i]
-                    temp_cell_data.append(temp_data[i - 3].pop())
-                    final_data.append(temp_cell_data)
-                final_data.append([' '])
-                final_data.append([' '])
+            for __cell in _cell:
+                if __cell == 'Timestamp':
+                    temp_data = cell
+                    final_data.append(['序号', '题号', '测试大类项目名称', '大类项目测试结果'])
+                    if len(title_data[flag_count]) > 4:
+                        title_data[flag_count].pop()
+                        final_data.append(title_data[flag_count])
+                    else:
+                        final_data.append(title_data[flag_count])
+                    flag_count += 1
+                    final_data.append(['测试项目', '测试标准', '测试数值', '测试结果'])
+                    if len(temp_data) <= 4:
+                        final_data.append(['', '', '', ''])
+                    else:
+                        for i in range(4, len(temp_data) + 1, 4):
+                            temp_cell_data = temp_data[i]
+                            temp_cell_data.append(temp_data[i - 3].pop())
+                            final_data.append(temp_cell_data)
+                    final_data.append([' '])
+                    final_data.append([' '])
     return final_data
 
 
