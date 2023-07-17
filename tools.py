@@ -13,11 +13,8 @@ def fill_title_table(table, data_list):
     for row_index, row in enumerate(table.rows):
         for col_index, cell in enumerate(row.cells):
             if col_index == 2:
-                # print("==============")
-                # print(table.cell(row_index, col_index - 1).text)
                 for data_index, data in enumerate(data_list):
                     if table.cell(row_index, col_index - 1).text in data[2]:
-                        # print("find the context")
                         if data[4] == 'warning':
                             cell.text = "N/A"
                         else:
@@ -72,6 +69,16 @@ def fill_normal_table(table, data_list):
                             cell.text = "OK"
                         else:
                             cell.text = "NOK"
+                    set_result_type(cell)
+
+
+# 预填充表格
+def pre_fill_normal_table(table):
+    for row_index, row in enumerate(table.rows):
+        for col_index, cell in enumerate(row.cells):
+            if row_index >= 2:
+                if col_index == 4:
+                    cell.text = "N/A"
                     set_result_type(cell)
 
 
@@ -138,7 +145,9 @@ def find_text_with_fill_table(docx_file, target_text, data_list,
     all_tables = doc.tables
     target_text = target_text.encode('utf-8').decode('utf-8')
 
-    # if index == 1:
+    if index == 1:
+        for table in all_tables:
+            pre_fill_normal_table(table)
     #     for aPara in paragraphs:  # 遍历段落找表格
     #         # print(aPara.text)
     #         if title_target_text in aPara.text:
@@ -165,8 +174,6 @@ def find_text_with_fill_table(docx_file, target_text, data_list,
                         table.autofit = False
                         print("Find " + target_text)
                         fill_normal_table(table, data_list)
-        else:
-            print("Not find " + target_text)
 
     doc.save(file_path)
 
@@ -276,11 +283,9 @@ def replace_at_symbol(lst):
 
 
 # 处理数据，整理后合并成一个final_list
-def connect_data(table):
+def connect_data_type_zero(table, title_data):
     final_data = []
-    title_data = table[9]  # 测试项的标题
-    title_data.insert(1, ['1', 'null', 'DutSelfCheck', 'null'])  # 自检这一项读不出来，要手动初始化
-    flag_count = 1  # 计数，第几个测试项目
+    flag_count = 0  # 计数，第几个测试项目
     for cell in table:
         for _cell in cell:
             for __cell in _cell:
@@ -300,6 +305,30 @@ def connect_data(table):
                         final_data.append(temp_cell_data)
                     final_data.append([' '])
                     final_data.append([' '])
+    return final_data
+
+
+def connect_data_type_one(table, title_data):
+    final_data = []
+    flag_count = 0  # 计数，第几个测试项目
+    for cell in table:
+        for _cell_index, _cell in enumerate(cell):
+            if _cell == 'Timestamp':
+                temp_data = cell
+                final_data.append(['序号', '题号', '测试大类项目名称', '大类项目测试结果'])
+                if len(title_data[flag_count]) > 4:
+                    title_data[flag_count].pop()
+                    final_data.append(title_data[flag_count])
+                else:
+                    final_data.append(title_data[flag_count])
+                flag_count += 1
+                final_data.append(['测试项目', '测试标准', '测试数值', '测试结果'])
+                for i in range(4, len(temp_data) + 1, 4):
+                    temp_cell_data = temp_data[i]
+                    temp_cell_data.append(temp_data[i - 3].pop())
+                    final_data.append(temp_cell_data)
+                final_data.append([' '])
+                final_data.append([' '])
     return final_data
 
 
