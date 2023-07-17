@@ -7,12 +7,32 @@ from docx.shared import Pt, RGBColor
 
 
 # 填充标题表格
-def fill_title_tabel(table, data_list):
+def fill_title_table(table, data_list):
+    print("==========================================")
+    print("------ 正在处理标题数据 ------")
     for row_index, row in enumerate(table.rows):
         for col_index, cell in enumerate(row.cells):
-            if row_index >= 2 and row_index - 2 < len(data_list):
-                if col_index == 2 and cell.text != "AUTOSAR网络管理测试" and cell.text != "物理层测试" and cell.text != "数据链路层测试" and cell.text != "网络管理测试" and cell.text != "应用层测试":
-                    pass
+            if col_index == 2:
+                # print("==============")
+                # print(table.cell(row_index, col_index - 1).text)
+                for data_index, data in enumerate(data_list):
+                    if table.cell(row_index, col_index - 1).text in data[2]:
+                        # print("find the context")
+                        if data[4] == 'warning':
+                            cell.text = "N/A"
+                        else:
+                            if data[3] == 'pass':
+                                cell.text = "OK"
+                            else:
+                                cell.text = "NOK"
+                        data_list.pop(data_index)
+                if cell.text != 'AUTOSAR网络管理测试' and cell.text != '物理层测试' and cell.text != '数据链路层测试' and cell.text != '网络管理测试' and cell.text != '应用层测试':
+                    if cell.text == '':
+                        cell.text = "N/A"
+                    set_result_type(cell)
+
+    print("------ 完成标题数据处理 ------")
+    print("==========================================")
 
 
 # 填充普通表格
@@ -45,35 +65,50 @@ def fill_normal_table(table, data_list):
 
                 elif col_index == 4:
                     cell.text = data_list[row_index - 2][1]
-
-                    # 设置垂直居中对齐
-                    cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
-                    content = cell.text.strip()
-
-                    shading_color = None  # 默认为无色
-                    if content == "OK":
-                        shading_color = RGBColor(0, 128, 0)  # 绿色
-                    elif content == "NOK":
-                        shading_color = RGBColor(255, 0, 0)  # 红色
-                    elif content == "N/A":
-                        shading_color = RGBColor(255, 255, 255)  # 白色
-
-                    # 添加或修改单元格的背景色
-                    if shading_color is not None:
-                        if cell._element.tcPr is None:
-                            cell._element.tcPr = parse_xml(f'<w:tcPr {nsdecls("w")}/>')
-                        shading_element = parse_xml(
-                            f'<w:shd {nsdecls("w")} w:fill="{shading_color}"/>')
-                        cell._element.tcPr.append(shading_element)
-
-                    # 遍历单元格内的段落并设置水平居中对齐
-                    for paragraph in cell.paragraphs:
-                        paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
-                        run = paragraph.runs[0]
-                        run.font.size = Pt(10.5)
-                        run.font.name = 'Times New Roman'
+                    if cell.text == 'warning':
+                        cell.text = "N/A"
+                    else:
+                        if cell.text == 'pass':
+                            cell.text = "OK"
+                        else:
+                            cell.text = "NOK"
+                    set_result_type(cell)
 
 
+# 设置测试结果单元格样式
+def set_result_type(cell):
+    # 设置垂直居中对齐
+    cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
+    content = cell.text.strip()
+
+    shading_color = None  # 默认为无色
+    if content == "OK":
+        shading_color = RGBColor(0, 128, 0)  # 绿色
+        # print("OK")
+    elif content == "NOK":
+        shading_color = RGBColor(255, 0, 0)  # 红色
+        # print("NOK")
+    elif content == "N/A":
+        shading_color = RGBColor(255, 255, 255)  # 白色
+        # print("N/A")
+
+    # 添加或修改单元格的背景色
+    if shading_color is not None:
+        if cell._element.tcPr is None:
+            cell._element.tcPr = parse_xml(f'<w:tcPr {nsdecls("w")}/>')
+        shading_element = parse_xml(
+            f'<w:shd {nsdecls("w")} w:fill="{shading_color}"/>')
+        cell._element.tcPr.append(shading_element)
+
+    # 遍历单元格内的段落并设置水平居中对齐
+    for paragraph in cell.paragraphs:
+        paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+        run = paragraph.runs[0]
+        run.font.size = Pt(10.5)
+        run.font.name = 'Times New Roman'
+
+
+# 读出单元格内容，主要用于测试
 def find_text_with_read_table(docx_file, target_text):
     doc = Document(docx_file)
 
@@ -95,12 +130,29 @@ def find_text_with_read_table(docx_file, target_text):
 
 
 # 填充word表格
-def find_text_with_fill_table(docx_file, target_text, data_list, file_path, table_type):
+def find_text_with_fill_table(docx_file, target_text, data_list,
+                              file_path, index):
     doc = Document(docx_file)
 
     paragraphs = doc.paragraphs
     all_tables = doc.tables
     target_text = target_text.encode('utf-8').decode('utf-8')
+
+    # if index == 1:
+    #     for aPara in paragraphs:  # 遍历段落找表格
+    #         # print(aPara.text)
+    #         if title_target_text in aPara.text:
+    #             ele = aPara._p.getnext()
+    #             while ele.tag != '' and ele.tag[-3:] != 'tbl':
+    #                 ele = ele.getnext()
+    #             if ele.tag != '':
+    #                 for table in all_tables:
+    #                     if table._tbl == ele:
+    #                         table.autofit = False
+    #                         fill_title_table(table, title_data_list)
+
+    print("==========================================")
+    print("------ 正在处理第" + index.__str__() + "个测试数据 ------")
 
     for aPara in paragraphs:  # 遍历段落找表格
         if target_text in aPara.text:
@@ -111,12 +163,47 @@ def find_text_with_fill_table(docx_file, target_text, data_list, file_path, tabl
                 for table in all_tables:
                     if table._tbl == ele:
                         table.autofit = False
-                        if table_type == 0:
-                            fill_normal_table(table, data_list)
-                        else:
-                            fill_title_tabel(table, data_list)
+                        print("Find " + target_text)
+                        fill_normal_table(table, data_list)
+        else:
+            print("Not find " + target_text)
 
     doc.save(file_path)
+
+    print("------ 完成第" + index.__str__() + "个测试数据的处理 ------")
+    print("==========================================")
+
+
+# 填充word标题表格
+def find_text_with_fill_title(docx_file, title_target_text, title_data_list, file_path):
+    doc = Document(docx_file)
+
+    paragraphs = doc.paragraphs
+    all_tables = doc.tables
+
+    for aPara in paragraphs:  # 遍历段落找表格
+        # print(aPara.text)
+        if title_target_text in aPara.text:
+            ele = aPara._p.getnext()
+            while ele.tag != '' and ele.tag[-3:] != 'tbl':
+                ele = ele.getnext()
+            if ele.tag != '':
+                for table in all_tables:
+                    if table._tbl == ele:
+                        table.autofit = False
+                        fill_title_table(table, title_data_list)
+
+    doc.save(file_path)
+
+
+# 检测特定字符串
+def find_same_context(cell, target_list):
+    # 使用循环遍历找到包含特定字符串的元素
+    for _str in target_list:
+        if cell.text.strip() in _str[2]:
+            # print("find " + cell.text.strip())
+            return True
+    return False
 
 
 # 解析HTML中的表格信息
@@ -151,6 +238,7 @@ def process_nested_table(table):
     return nested_data
 
 
+# 解析HTML中的标题信息
 def process_table(table):
     data = []
 
@@ -187,7 +275,7 @@ def replace_at_symbol(lst):
     return result
 
 
-# 处理数据，合并成一个list
+# 处理数据，整理后合并成一个final_list
 def connect_data(table):
     final_data = []
     title_data = table[9]  # 测试项的标题
@@ -213,6 +301,24 @@ def connect_data(table):
                     final_data.append([' '])
                     final_data.append([' '])
     return final_data
+
+
+# 提取final_list中的单个list元素作为data_list填入表格
+def get_list_from_final(final_list):
+    data_list = []
+
+    for data_index, data in enumerate(final_list):
+        temp_list = []
+        if len(data) > 2:
+            if data[1] == '题号':
+                temp_list.append([final_list[data_index + 1][1] + " " + final_list[data_index + 1][2]])
+                for _data in range(data_index + 3, len(final_list) - 1):
+                    if final_list[_data] == [' ']:
+                        break
+                    else:
+                        temp_list.append([final_list[_data][2], final_list[_data][3]])
+                data_list.append(temp_list)
+    return data_list
 
 
 # list内元素计数
