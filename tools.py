@@ -7,15 +7,23 @@ from docx.shared import Pt, RGBColor
 
 
 # 填充标题表格
-def fill_title_table(table, data_list):
+def fill_title_table(table, data_list, doc):
     print("==========================================")
     print("------ 正在处理标题数据 ------")
     for row_index, row in enumerate(table.rows):
         for col_index, cell in enumerate(row.cells):
             if col_index == 2:
-                for data_index, data in enumerate(data_list):
-                    if table.cell(row_index, col_index - 1).text in data[2]:
+                index = 0
+                for data in data_list:
+
+                    if table.cell(row_index, col_index - 1).text in data[
+                        2] and cell.text != 'AUTOSAR网络管理测试' and cell.text != '物理层测试' \
+                            and cell.text != '数据链路层测试' and cell.text != '网络管理测试' and cell.text != '应用层测试':
+
+                        print("Find and set: " + table.cell(row_index, col_index - 1).text)
+
                         if len(data) > 4:
+                            print(data)
                             if data[4] == 'warning':
                                 cell.text = "N/A"
                             else:
@@ -24,8 +32,14 @@ def fill_title_table(table, data_list):
                                 else:
                                     cell.text = "NOK"
                         else:
-                            cell.text = "N/A"
-                        data_list.pop(data_index)
+                            if data[3] == 'pass':
+                                cell.text = "OK"
+                            else:
+                                cell.text = "NOK"
+                    else:
+                        if index == 0:
+                            find_text_with_read_table(doc, table.cell(row_index, col_index - 1).text)
+                            index = 1
                 if cell.text != 'AUTOSAR网络管理测试' and cell.text != '物理层测试' and cell.text != '数据链路层测试' and cell.text != '网络管理测试' and cell.text != '应用层测试':
                     if cell.text == '':
                         cell.text = "N/A"
@@ -118,10 +132,8 @@ def set_result_type(cell):
         run.font.name = 'Times New Roman'
 
 
-# 读出单元格内容，主要用于测试
-def find_text_with_read_table(docx_file, target_text):
-    doc = Document(docx_file)
-
+# 读出单元格内容，然后进行预填充
+def find_text_with_read_table(doc, target_text):
     paragraphs = doc.paragraphs
     all_tables = doc.tables
     target_text = target_text.encode('utf-8').decode('utf-8')
@@ -133,10 +145,12 @@ def find_text_with_read_table(docx_file, target_text):
                 ele = ele.getnext()
             if ele.tag != '':
                 for table in all_tables:
-                    if table._tbl == ele:
-                        for i in range(len(table.rows)):
-                            for j in range(len(table.columns)):
-                                print(table.cell(i, j).text)
+                    if table._tbl == ele and table.cell(0, 0).text != '测试用例章节':
+                        pre_fill_normal_table(table)
+                        print("Not find but reset: " + target_text)
+                        # for i in range(len(table.rows)):
+                        #     for j in range(len(table.columns)):
+                        #         print(table.cell(i, j).text)
 
 
 # 填充word表格
@@ -148,9 +162,6 @@ def find_text_with_fill_table(docx_file, target_text, data_list,
     all_tables = doc.tables
     target_text = target_text.encode('utf-8').decode('utf-8')
 
-    if index == 1:
-        for table in all_tables:
-            pre_fill_normal_table(table)
     #     for aPara in paragraphs:  # 遍历段落找表格
     #         # print(aPara.text)
     #         if title_target_text in aPara.text:
@@ -201,7 +212,7 @@ def find_text_with_fill_title(docx_file, title_target_text, title_data_list, fil
                 for table in all_tables:
                     if table._tbl == ele:
                         table.autofit = False
-                        fill_title_table(table, title_data_list)
+                        fill_title_table(table, title_data_list, doc)
 
     doc.save(file_path)
 
@@ -273,19 +284,77 @@ def process_table(table):
 
 
 # 替换文本
-def replace_at_symbol(lst):
-    result = []
-    for item in lst:
-        if isinstance(item, list):
-            result.append(replace_at_symbol(item))
-        elif isinstance(item, str) and item == '<br>' and item == '</br>':
-            result.append(';')
-        else:
-            result.append(item)
+def replace_at_symbol(data_list):
+    for data in data_list:
+        temp_list = data[2].split("到")
+        result = ""
+        for item in temp_list:
+            result = result + item + "-"
+        res = result[:-1]
+        data[2] = res
+
+
+# 去除换行符
+def delete_enter(table):
+    lines = table.text.split('\n')  # 分割字符串为行
+
+    result = []  # 存储数据的列表
+
+    for line in lines:
+        line = line.strip()  # 去除行首尾的空格
+        if line:  # 确保行不为空
+            result.append(line)  # 将行添加到结果列表
+    print(result)
+    print("----------------")
     return result
 
 
-# 处理数据，整理后合并成一个final_list
+# 特殊处理2类 HTML 文件的标题表格
+def special_duel_with_title(table):
+    result = delete_enter(table)
+    result_temp = []
+
+    is_done = False  # 判断是否到特殊位置
+
+    for line in result:
+        clean_line = line
+        if clean_line:  # 确保行不为空
+            temp_line = clean_line.split(" ")
+
+            if temp_line[0] == '9.8':  # 最后一项特殊处理，后面的数据可以丢弃
+                is_done = True
+                clean_line = temp_line[1] + " " + temp_line[2]
+                result_temp.append([temp_line[0], clean_line, ''])
+
+            if not is_done and temp_line[0] != '6' and temp_line[0] != '7' and temp_line[0] != '8' and temp_line[
+                0] != '9':  # 没到特殊位置时进行一般处理
+
+                if 2 <= len(temp_line) <= 4 and temp_line[0] != '7.2' and temp_line[0] != '9.7':  # 一般情况
+                    result_temp.append([temp_line[0], temp_line[1], ''])
+
+                elif temp_line[0] == '7.2':  # 该情况需要特殊处理
+                    clean_line = temp_line[1] + " " + temp_line[2] + " " + temp_line[3]
+                    result_temp.append([temp_line[0], clean_line, ''])
+
+                elif temp_line[0] == '9.7':  # 该情况需要特殊处理
+                    clean_line = temp_line[1] + " " + temp_line[2]
+                    result_temp.append([temp_line[0], clean_line, ''])
+
+    return result_temp
+
+
+# 特殊处理2类 HTML 文件的测试数据表格
+def special_duel_with_table(table, title_data):
+    result = delete_enter(table)
+    print(result)
+    print("----------")
+    i = 0
+    for data in result:
+        title_data[i][2] = result[1]
+        i += 1
+
+
+# 处理类型0的 HTML 数据，整理后合并成一个final_list
 def connect_data_type_zero(table, title_data):
     final_data = []
     flag_count = 0  # 计数，第几个测试项目
@@ -311,9 +380,10 @@ def connect_data_type_zero(table, title_data):
     return final_data
 
 
+# 处理类型1的 HTML 数据，整理后合并成一个final_list
 def connect_data_type_one(table, title_data):
     final_data = []
-    flag_count = 0  # 计数，第几个测试项目
+    flag_count = 1  # 计数，第几个测试项目
     for cell in table:
         for _cell_index, _cell in enumerate(cell):
             for __cell in _cell:
@@ -326,14 +396,24 @@ def connect_data_type_one(table, title_data):
                     else:
                         final_data.append(title_data[flag_count])
                     flag_count += 1
+                    if title_data[flag_count - 1][2] == 'NM状态转换测试' or title_data[flag_count - 1][
+                        2] == '特殊NM策略测试':
+                        final_data.pop()
+                        final_data.append(title_data[flag_count])
+                        flag_count += 1
+                    print(final_data[len(final_data) - 1])
                     final_data.append(['测试项目', '测试标准', '测试数值', '测试结果'])
                     if len(temp_data) <= 4:
                         final_data.append(['', '', '', ''])
+                        print("['', '', '', '']")
+                        print("---------------")
                     else:
                         for i in range(4, len(temp_data) + 1, 4):
                             temp_cell_data = temp_data[i]
                             temp_cell_data.append(temp_data[i - 3].pop())
                             final_data.append(temp_cell_data)
+                            print(temp_cell_data)
+                        print("---------------")
                     final_data.append([' '])
                     final_data.append([' '])
     return final_data
