@@ -101,7 +101,6 @@ for filename in html_files:
 
         final_list = connect_data_type_zero(nested_tables_data, title_data)
         data_list = get_list_from_final(final_list)
-        print(data_list)
 
     elif file_type == 1:
         tables = soup.find_all('table')
@@ -118,14 +117,24 @@ for filename in html_files:
         font = soup.find('font', string='6 物理层', size="5")
         tables = font.find_all_next('table')
 
-        print(len(tables))
-        print("-------")
-
         temp_result = []
 
-        for table_index, table in enumerate(tables):
+        result_index = 0
+        for table in tables:
+            print(table.text)
+            print("---------------")
             temp_result.append(delete_enter(table))
-            title_data[table_index][2] = temp_result[table_index][1]
+
+        for data in title_data:
+            if data[0] == '6.1' or data[0] == '6.9' or data[0] == '6.8' or data[0] == '6.2':
+                data[2] = ''
+            else:
+                if temp_result[result_index][1] == 'N/T':
+                    data[2] = 'N/A'
+                else:
+                    data[2] = temp_result[result_index][1]
+                result_index += 1
+
         print(title_data)
 
     # # 算通过、不通过、没测试
@@ -148,14 +157,14 @@ for filename in html_files:
     # 指定要搜索的文本和数据列表
     # 对标题表格进行搜索和填充
     title_target_text = "测试项目总览"
-    find_text_with_fill_title(model_input_filepath, title_target_text, title_data, output_filepath)
+    find_text_with_fill_title(model_input_filepath, title_target_text, title_data, output_filepath, file_type)
 
     # 执行搜索并填充测试表格
     j = 1  # 测试数据数量迭代器
     print("------ 共有" + len(data_list).__str__() + "个测试数据待处理 ------")
     for data in data_list:
         target_text = data[0][0].split("@")[0]
-        print(target_text)
+        # print(target_text)
         temp_data = []
         for _data_index, _data in enumerate(data):
             if _data_index == 0:
@@ -163,7 +172,7 @@ for filename in html_files:
             else:
                 temp_data.append(_data)
 
-        print(temp_data)
+        # print(temp_data)
         find_text_with_fill_table(output_filepath, target_text, temp_data, output_filepath, j)
         j += 1
 

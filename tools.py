@@ -7,39 +7,65 @@ from docx.shared import Pt, RGBColor
 
 
 # 填充标题表格
-def fill_title_table(table, data_list, doc):
+def fill_title_table(table, data_list, doc, file_type):
     print("==========================================")
     print("------ 正在处理标题数据 ------")
     for row_index, row in enumerate(table.rows):
         for col_index, cell in enumerate(row.cells):
             if col_index == 2:
-                index = 0
+                flag = 1
+
+                main_text = table.cell(row_index, col_index - 1).text
+                num_text = table.cell(row_index, col_index - 2).text
+                title_text = num_text + " " + main_text
+
                 for data in data_list:
+                    if file_type == 0 or file_type == 1:
+                        if table.cell(row_index, col_index - 2).text == data[1] \
+                                and cell.text != 'AUTOSAR网络管理测试' and cell.text != '物理层测试' \
+                                and cell.text != '数据链路层测试' and cell.text != '网络管理测试' and cell.text != '应用层测试':
 
-                    if table.cell(row_index, col_index - 1).text in data[
-                        2] and cell.text != 'AUTOSAR网络管理测试' and cell.text != '物理层测试' \
-                            and cell.text != '数据链路层测试' and cell.text != '网络管理测试' and cell.text != '应用层测试':
+                            if data[1] == '6.1' or data[1] == '6.2' or data[1] == '6.3' or data[1] == '6.4':
 
-                        print("Find and set: " + table.cell(row_index, col_index - 1).text)
+                                if file_type == 1 and (data[1] == '6.1' or data[1] == '6.2'):
+                                    if ('Busoff下NM状态转换' in data[2] or '高负载下的NM状态转换测试' in data[2]) \
+                                            and (
+                                            main_text == 'BUS-OFF下NM状态转换测试' or main_text == '高负载下的NM状态转换测试'):
+                                        compare_set_title_result(cell, data, title_text)
+                                        break
 
-                        if len(data) > 4:
-                            print(data)
-                            if data[4] == 'warning':
-                                cell.text = "N/A"
+                                elif file_type == 0 and data[1] == '6.4':
+                                    if '位上升' in data[2] and '下降时间' in data[2] and main_text == '位上升/下降时间':
+                                        compare_set_title_result(cell, data, title_text)
+                                        break
+
+                                elif data[2] in table.cell(row_index, col_index - 1).text:
+                                    compare_set_title_result(cell, data, title_text)
+                                    break
                             else:
-                                if data[3] == 'pass':
-                                    cell.text = "OK"
-                                else:
-                                    cell.text = "NOK"
-                        else:
-                            if data[3] == 'pass':
-                                cell.text = "OK"
-                            else:
-                                cell.text = "NOK"
+                                compare_set_title_result(cell, data, title_text)
+                                break
+                        elif flag == 1 and (cell.text == '' or cell.text == "N/A"):
+                            find_text_with_read_table(doc, main_text)
+                            flag = 0
+
                     else:
-                        if index == 0:
-                            find_text_with_read_table(doc, table.cell(row_index, col_index - 1).text)
-                            index = 1
+                        if table.cell(row_index, col_index - 2).text == data[0] \
+                                and cell.text != 'AUTOSAR网络管理测试' and cell.text != '物理层测试' \
+                                and cell.text != '数据链路层测试' and cell.text != '网络管理测试' and cell.text != '应用层测试':
+                            if data[0] == '6.1' or data[0] == '6.2' or data[0] == '6.3' or data[0] == '6.4':
+                                if data[1] in table.cell(row_index, col_index - 1).text:
+                                    print("Find and set: " + title_text)
+                                    cell.text = data[2]
+                                    break
+                            else:
+                                print("Find and set: " + title_text)
+                                cell.text = data[2]
+
+                        elif flag == 1 and (cell.text == '' or cell.text == "N/A"):
+                            find_text_with_read_table(doc, title_text)
+                            flag = 0
+
                 if cell.text != 'AUTOSAR网络管理测试' and cell.text != '物理层测试' and cell.text != '数据链路层测试' and cell.text != '网络管理测试' and cell.text != '应用层测试':
                     if cell.text == '':
                         cell.text = "N/A"
@@ -47,6 +73,51 @@ def fill_title_table(table, data_list, doc):
 
     print("------ 完成标题数据处理 ------")
     print("==========================================")
+
+
+# 判断后填入标题结果
+def compare_set_title_result(cell, data, title_text):
+    print("Find and set: " + title_text)
+    if len(data) > 4:
+        if data[4] == 'warning':
+            cell.text = "N/A"
+        else:
+            if data[3] == 'pass':
+                cell.text = "OK"
+            else:
+                cell.text = "NOK"
+    else:
+        if data[3] == 'pass':
+            cell.text = "OK"
+        else:
+            cell.text = "NOK"
+
+
+# 拷贝表格并粘贴在下一个位置
+def copy_table(document, table, data):
+    # 获取要复制的表格在文档中的索引
+    table_index = document.tables.index(table)
+    # 获取要复制的表格的行和列
+    table_rows = table.rows
+    # 创建一个新的表格，行和列与要复制的表格相同
+    new_table = document.add_table(rows=table.rows, cols=table.columns)
+    # 设置新表格的样式与要复制的表格相同
+    new_table.style = table.style
+
+    # 遍历要复制的表格的行和列，并将内容复制到新表格中
+    for i, row in enumerate(table_rows):
+        for j, cell in enumerate(row.cells):
+            # 将要复制的单元格的内容复制到新表格的对应位置
+            new_table.cell(i, j).text = cell.text
+
+    # 在新表格中填入数据
+    for i, row in enumerate(new_table.rows):
+        for j, cell in enumerate(row.cells):
+            # 假设data是一个二维列表，包含要填入的数据
+            cell.text = str(data[i][j])
+
+    # 将新表格插入到原始表格的下一行
+    document.tables[table_index + 1].rows[0].cells[0].tables.append(new_table)
 
 
 # 填充普通表格
@@ -196,7 +267,7 @@ def find_text_with_fill_table(docx_file, target_text, data_list,
 
 
 # 填充word标题表格
-def find_text_with_fill_title(docx_file, title_target_text, title_data_list, file_path):
+def find_text_with_fill_title(docx_file, title_target_text, title_data_list, file_path, file_type):
     doc = Document(docx_file)
 
     paragraphs = doc.paragraphs
@@ -212,7 +283,7 @@ def find_text_with_fill_title(docx_file, title_target_text, title_data_list, fil
                 for table in all_tables:
                     if table._tbl == ele:
                         table.autofit = False
-                        fill_title_table(table, title_data_list, doc)
+                        fill_title_table(table, title_data_list, doc, file_type)
 
     doc.save(file_path)
 
@@ -304,8 +375,7 @@ def delete_enter(table):
         line = line.strip()  # 去除行首尾的空格
         if line:  # 确保行不为空
             result.append(line)  # 将行添加到结果列表
-    print(result)
-    print("----------------")
+
     return result
 
 
@@ -326,10 +396,11 @@ def special_duel_with_title(table):
                 clean_line = temp_line[1] + " " + temp_line[2]
                 result_temp.append([temp_line[0], clean_line, ''])
 
-            if not is_done and temp_line[0] != '6' and temp_line[0] != '7' and temp_line[0] != '8' and temp_line[
-                0] != '9':  # 没到特殊位置时进行一般处理
+            if not is_done and temp_line[0] != '6' and temp_line[0] != '7' \
+                    and temp_line[0] != '8' and temp_line[0] != '9':  # 没到特殊位置时进行一般处理
 
-                if 2 <= len(temp_line) <= 4 and temp_line[0] != '7.2' and temp_line[0] != '9.7':  # 一般情况
+                if 2 <= len(temp_line) <= 4 and temp_line[0] != '7.2' \
+                        and temp_line[0] != '9.7' and temp_line[0] != '6.4':  # 一般情况
                     result_temp.append([temp_line[0], temp_line[1], ''])
 
                 elif temp_line[0] == '7.2':  # 该情况需要特殊处理
@@ -338,6 +409,14 @@ def special_duel_with_title(table):
 
                 elif temp_line[0] == '9.7':  # 该情况需要特殊处理
                     clean_line = temp_line[1] + " " + temp_line[2]
+                    result_temp.append([temp_line[0], clean_line, ''])
+
+                elif temp_line[0] == '6.4':  # 该情况需要特殊处理
+                    if temp_line[1] == '位上升下降时间':
+                        temp_line[1] = '位上升/下降时间'
+                    else:
+                        temp_line[1] = '多网段同步唤醒测试'
+                    clean_line = temp_line[1]
                     result_temp.append([temp_line[0], clean_line, ''])
 
     return result_temp
