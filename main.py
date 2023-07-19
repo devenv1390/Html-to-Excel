@@ -162,15 +162,7 @@ for filename in html_files:
         temp_target_text = target_text.split(" ")[0]
         target_text = target_text_mapping.get(temp_target_text, target_text)
         temp_data = [_data for _data_index, _data in enumerate(data) if _data_index != 0]
-        print(target_text)
-        # temp_data = []
-        # for _data_index, _data in enumerate(data):
-        #     if _data_index == 0:
-        #         continue
-        #     else:
-        #         temp_data.append(_data)
-
-        # print(temp_data)
+        # print(target_text)
         find_text_with_fill_table(output_filepath, target_text, temp_data, output_filepath, j)
         j += 1
 
