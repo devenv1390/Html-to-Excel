@@ -101,7 +101,6 @@ for filename in html_files:
 
         final_list = connect_data_type_zero(nested_tables_data, title_data)
         data_list = get_list_from_final(final_list)
-        print(data_list)
 
     elif file_type == 1:
         tables = soup.find_all('table')
@@ -118,52 +117,60 @@ for filename in html_files:
         font = soup.find('font', string='6 物理层', size="5")
         tables = font.find_all_next('table')
 
-        print(len(tables))
-        print("-------")
-
         temp_result = []
 
-        for table_index, table in enumerate(tables):
+        result_index = 0
+        for table in tables:
+            print(table.text)
+            print("---------------")
             temp_result.append(delete_enter(table))
-            title_data[table_index][2] = temp_result[table_index][1]
-        print(title_data)
 
-    # # 算通过、不通过、没测试
-    # total = len(title_data)
-    # warning_number = count_element(nested_temp_data[9], 'warning')
-    # fail_number = count_element(nested_temp_data[9], 'fail')
-    # pass_number = total - fail_number - warning_number
-    # complete_number = pass_number + fail_number
-    #
-    # per_complete = round(complete_number / total, 2) * 100
-    # per_not_complete = 100 - per_complete
-    # per_pass = round(pass_number / total, 2) * 100
-    # per_fail = round(fail_number / total, 2) * 100
-    #
-    # str_pre_complete = per_complete.__str__() + "%"
-    # str_per_not_complete = per_not_complete.__str__() + "%"
-    # str_per_pass = per_pass.__str__() + "%"
-    # str_per_fail = per_fail.__str__() + "%"
+        for data in title_data:
+            if data[0] == '6.1' or data[0] == '6.9' or data[0] == '6.8' or data[0] == '6.2':
+                data[2] = ''
+            else:
+                if temp_result[result_index][1] == 'N/T':
+                    data[2] = 'N/A'
+                else:
+                    data[2] = temp_result[result_index][1]
+                result_index += 1
+
+        print(title_data)
 
     # 指定要搜索的文本和数据列表
     # 对标题表格进行搜索和填充
     title_target_text = "测试项目总览"
-    find_text_with_fill_title(model_input_filepath, title_target_text, title_data, output_filepath)
+    find_text_with_fill_title(model_input_filepath, title_target_text, title_data, output_filepath, file_type)
+
+    # 定义目标文本的映射字典
+    target_text_mapping = {
+        '6.4': '6.4 位上升/下降时间',
+        '9.8': '9.8 Check Sum行为检测',
+        '6.2.3': '6.2.3 内阻-接地断开',
+        '7.4': '7.4 100%总线负载下的报文接收',
+        '8.2': '8.2 节点首次完成所有周期型报文发送的时间',
+        '6.8.5': '6.8.5 CAN_H对CAN_L短路',
+        '6.8.4': '6.8.4 CAN_H与/或CAN_L对地短路',
+        '6.8.3': '6.8.3 CAN_H与/或CAN_L对电源短路',
+    }
 
     # 执行搜索并填充测试表格
     j = 1  # 测试数据数量迭代器
     print("------ 共有" + len(data_list).__str__() + "个测试数据待处理 ------")
     for data in data_list:
         target_text = data[0][0].split("@")[0]
+        temp_target_text = target_text.split(" ")[0]
+        target_text = target_text_mapping.get(temp_target_text, target_text)
+        temp_data = [_data for _data_index, _data in enumerate(data) if _data_index != 0]
         print(target_text)
-        temp_data = []
-        for _data_index, _data in enumerate(data):
-            if _data_index == 0:
-                continue
-            else:
-                temp_data.append(_data)
+        # temp_data = []
+        # for _data_index, _data in enumerate(data):
+        #     if _data_index == 0:
+        #         continue
+        #     else:
+        #         temp_data.append(_data)
 
-        print(temp_data)
+        # print(temp_data)
         find_text_with_fill_table(output_filepath, target_text, temp_data, output_filepath, j)
         j += 1
 
