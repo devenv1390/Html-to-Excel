@@ -23,7 +23,7 @@ def fill_title_table(table, data_list, doc, file_type):
                 title_text = num_text + " " + main_text
 
                 for data in data_list:
-                    if file_type == 0 or file_type == 1:
+                    if file_type == 0 or file_type == 1 or file_type == 0.5:
                         if table.cell(row_index, col_index - 2).text == data[1] \
                                 and cell.text != 'AUTOSAR网络管理测试' and cell.text != '物理层测试' \
                                 and cell.text != '数据链路层测试' and cell.text != '网络管理测试' and cell.text != '应用层测试':
@@ -554,6 +554,7 @@ def connect_data_type_zero(table, title_data):
                     flag_count += 1
                     final_data.append(['测试项目', '测试标准', '测试数值', '测试结果'])
                     for i in range(4, len(temp_data) + 1, 4):
+                        print(temp_data)
                         temp_cell_data = temp_data[i]
                         temp_cell_data.append(temp_data[i - 3].pop())
                         final_data.append(temp_cell_data)
@@ -565,31 +566,31 @@ def connect_data_type_zero(table, title_data):
 # 处理类型1的 HTML 数据，整理后合并成一个final_list
 def connect_data_type_one(table, title_data):
     final_data = []
-    flag_count = 1  # 计数，第几个测试项目
+    # flag_count = 1  # 计数，第几个测试项目
+    flag_count = 0  # 计数，第几个测试项目
+    skip_index = 2
     for cell in table:
         for _cell_index, _cell in enumerate(cell):
             for __cell in _cell:
                 if __cell == 'Timestamp':
                     temp_data = cell
-                    final_data.append(['序号', '题号', '测试大类项目名称', '大类项目测试结果'])
-                    if len(title_data[flag_count]) > 4:
-                        title_data[flag_count].pop()
-                        final_data.append(title_data[flag_count])
+                    if skip_index > 0:
+                        skip_index -= 1
                     else:
-                        final_data.append(title_data[flag_count])
-                    flag_count += 1
-                    if title_data[flag_count - 1][2] == 'NM状态转换测试' or title_data[flag_count - 1][
-                        2] == '特殊NM策略测试':
-                        final_data.pop()
-                        final_data.append(title_data[flag_count])
+                        final_data.append(['序号', '题号', '测试大类项目名称', '大类项目测试结果'])
+                        if len(title_data[flag_count]) > 4:
+                            title_data[flag_count].pop()
+                            final_data.append(title_data[flag_count])
+                        else:
+                            final_data.append(title_data[flag_count])
                         flag_count += 1
-                    print(final_data[len(final_data) - 1])
-                    final_data.append(['测试项目', '测试标准', '测试数值', '测试结果'])
-                    if len(temp_data) <= 4:
-                        final_data.append(['', '', '', ''])
-                        print("['', '', '', '']")
-                        print("---------------")
-                    else:
+                        if title_data[flag_count - 1][1] == '':
+                            final_data.pop()
+                            temp_title_data, flag_count = next_title_context(title_data, flag_count)
+                            final_data.append(temp_title_data)
+                            flag_count += 1
+                        print(final_data[len(final_data) - 1])
+                        final_data.append(['测试项目', '测试标准', '测试数值', '测试结果'])
                         for i in range(4, len(temp_data) + 1, 4):
                             temp_cell_data = temp_data[i]
                             temp_cell_data.append(temp_data[i - 3].pop())
@@ -599,6 +600,15 @@ def connect_data_type_one(table, title_data):
                     final_data.append([' '])
                     final_data.append([' '])
     return final_data
+
+
+def next_title_context(title_data, flag_count):
+    if title_data[flag_count][1] == '':
+        return next_title_context(title_data, flag_count + 1)
+    else:
+        if len(title_data[flag_count]) > 4:
+            title_data[flag_count].pop()
+        return title_data[flag_count], flag_count
 
 
 # 提取final_list中的单个list元素作为data_list填入表格

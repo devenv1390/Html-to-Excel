@@ -42,8 +42,12 @@ for filename in html_files:
 
     if soup.find('table', class_='HeadingTable') is not None:
         file_type = 0
+        if soup.find('big', string='Preparation of Test Module') is not None:
+            file_type = 0.5
+
     elif soup.find('table', class_="MsoNormalTable") is not None:
-        file_type = 1
+            file_type = 1
+
     elif soup.find('h1') is not None:
         file_type = 2
 
@@ -51,7 +55,7 @@ for filename in html_files:
 
     # 根据不同种类的 HTML 采用不同的标题表格和实验内容表格解析方式
     title_data = []
-    if file_type == 0:
+    if file_type == 0 or file_type == 0.5:
         # 查找第一个class为"Heading4"的<div>标签
         heading = soup.find('div', class_='Heading4', string='Test Case Results')
 
@@ -102,7 +106,7 @@ for filename in html_files:
         final_list = connect_data_type_zero(nested_tables_data, title_data)
         data_list = get_list_from_final(final_list)
 
-    elif file_type == 1:
+    elif file_type == 1 or file_type == 0.5:
         tables = soup.find_all('table')
 
         for table in tables:
