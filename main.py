@@ -5,8 +5,8 @@ from bs4 import BeautifulSoup
 
 # 工具
 from tools import find_text_with_fill_table, process_nested_table, process_table, connect_data_type_zero, \
-    replace_at_symbol, get_list_from_final, find_text_with_fill_title, connect_data_type_one, special_duel_with_title, \
-    special_duel_with_table, delete_enter
+    replace_at_symbol, get_list_from_final, find_text_with_fill_title, connect_data_type_one, \
+    special_duel_with_title, delete_enter
 
 # 创建 output 文件夹（如果不存在）
 if not os.path.exists('output'):
@@ -42,8 +42,12 @@ for filename in html_files:
 
     if soup.find('table', class_='HeadingTable') is not None:
         file_type = 0
+        if soup.find('big', string='Preparation of Test Module') is not None:
+            file_type = 0.5
+
     elif soup.find('table', class_="MsoNormalTable") is not None:
         file_type = 1
+
     elif soup.find('h1') is not None:
         file_type = 2
 
@@ -51,7 +55,7 @@ for filename in html_files:
 
     # 根据不同种类的 HTML 采用不同的标题表格和实验内容表格解析方式
     title_data = []
-    if file_type == 0:
+    if file_type == 0 or file_type == 0.5:
         # 查找第一个class为"Heading4"的<div>标签
         heading = soup.find('div', class_='Heading4', string='Test Case Results')
 
@@ -102,7 +106,7 @@ for filename in html_files:
         final_list = connect_data_type_zero(nested_tables_data, title_data)
         data_list = get_list_from_final(final_list)
 
-    elif file_type == 1:
+    elif file_type == 1 or file_type == 0.5:
         tables = soup.find_all('table')
 
         for table in tables:
@@ -140,11 +144,11 @@ for filename in html_files:
     # 指定要搜索的文本和数据列表
     # 对标题表格进行搜索和填充
     title_target_text = "测试项目总览"
-    find_text_with_fill_title(model_input_filepath, title_target_text, title_data, output_filepath, file_type)
+    # find_text_with_fill_title(model_input_filepath, title_target_text, title_data, output_filepath, file_type)
 
     # 定义目标文本的映射字典
     target_text_mapping = {
-        '6.4': '6.4 位上升/下降时间',
+        '6.1': '6.1 BUS-OFF下NM状态转换测试',
         '9.8': '9.8 Check Sum行为检测',
         '6.2.3': '6.2.3 内阻-接地断开',
         '7.4': '7.4 100%总线负载下的报文接收',
@@ -152,6 +156,7 @@ for filename in html_files:
         '6.8.5': '6.8.5 CAN_H对CAN_L短路',
         '6.8.4': '6.8.4 CAN_H与/或CAN_L对地短路',
         '6.8.3': '6.8.3 CAN_H与/或CAN_L对电源短路',
+        '5.17': 'BSM-RMS-NOS-RSS-PBSM-BSM-RMS-NOS-RSS-PBSM-BSM转换测试'
     }
 
     # 执行搜索并填充测试表格
@@ -159,10 +164,13 @@ for filename in html_files:
     print("------ 共有" + len(data_list).__str__() + "个测试数据待处理 ------")
     for data in data_list:
         target_text = data[0][0].split("@")[0]
-        temp_target_text = target_text.split(" ")[0]
-        target_text = target_text_mapping.get(temp_target_text, target_text)
+        if target_text == '6.4 位上升下降时间':
+            target_text = '6.4 位上升/下降时间'
+        else:
+            temp_target_text = target_text.split(" ")[0]
+            target_text = target_text_mapping.get(temp_target_text, target_text)
         temp_data = [_data for _data_index, _data in enumerate(data) if _data_index != 0]
-        # print(target_text)
+        print(target_text)
         # print(temp_data)
         find_text_with_fill_table(output_filepath, target_text, temp_data, output_filepath, j)
         j += 1
