@@ -163,6 +163,7 @@ for filename in html_files:
         target_text = target_text_mapping.get(temp_target_text, target_text)
         temp_data = [_data for _data_index, _data in enumerate(data) if _data_index != 0]
         # print(target_text)
+        # print(temp_data)
         find_text_with_fill_table(output_filepath, target_text, temp_data, output_filepath, j)
         j += 1
 

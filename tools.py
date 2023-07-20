@@ -1,6 +1,9 @@
+from copy import deepcopy
+
+import docx
 from docx import Document
 from docx.enum.table import WD_CELL_VERTICAL_ALIGNMENT
-from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
+from docx.enum.text import WD_PARAGRAPH_ALIGNMENT, WD_BREAK
 from docx.oxml import parse_xml
 from docx.oxml.ns import nsdecls
 from docx.shared import Pt, RGBColor
@@ -93,31 +96,114 @@ def compare_set_title_result(cell, data, title_text):
             cell.text = "NOK"
 
 
+# 查找目标表格的段落并返回索引
+def find_paragraph_with_table(doc, table_identifier):
+    for i, paragraph in enumerate(doc.paragraphs):
+        for run in paragraph.runs:
+            if table_identifier in run.text:
+                return i
+    return -1
+
+
+# 复制单元格样式
+def copy_cell_style(source_cell, target_cell):
+    target_cell.paragraphs[0].clear()
+    for paragraph in source_cell.paragraphs:
+        new_paragraph = target_cell.add_paragraph()
+        new_paragraph.text = paragraph.text
+        for run in paragraph.runs:
+            new_run = new_paragraph.add_run()
+            new_run.bold = run.bold
+            new_run.italic = run.italic
+            new_run.underline = run.underline
+            new_run.font.size = run.font.size
+            new_run.font.name = run.font.name
+            new_run.font.color.rgb = run.font.color.rgb
+
+
+# 将带有相同单元格信息的表格存入一个list中
+def find_tables_with_content(doc, target_content):
+    """
+    在给定的Word文档中查找所有包含指定内容的单元格所在的表格，并将这些表格存储在一个列表中。
+
+    Parameters:
+        doc (docx.Document): Word文档对象。
+        target_content (str): 要搜索的特定内容。
+
+    Returns:
+        list: 包含所有符合条件的表格的列表。如果没有找到符合条件的表格，则返回空列表。
+
+    """
+    tables_with_content = []  # 存储符合条件的表格的列表
+
+    # 遍历文档中的所有表格
+    for table in doc.tables:
+        # 遍历表格的所有行
+        for row in table.rows:
+            # 遍历行的所有单元格
+            for cell in row.cells:
+                # 检查目标内容是否在当前单元格的文本中
+                if target_content in cell.text:
+                    # 如果找到目标内容，将当前表格添加到列表中
+                    tables_with_content.append(table)
+                    # 跳出当前单元格的循环，继续下一行的搜索
+                    break
+            else:
+                # 如果当前行中没有找到目标内容，继续下一行的搜索
+                continue
+            # 如果找到目标内容，跳出当前行的循环，继续下一个表格的搜索
+            break
+
+    return tables_with_content
+
+
 # 拷贝表格并粘贴在下一个位置
-def copy_table(document, table, data):
-    # 获取要复制的表格在文档中的索引
-    table_index = document.tables.index(table)
-    # 获取要复制的表格的行和列
-    table_rows = table.rows
-    # 创建一个新的表格，行和列与要复制的表格相同
-    new_table = document.add_table(rows=table.rows, cols=table.columns)
-    # 设置新表格的样式与要复制的表格相同
-    new_table.style = table.style
+def copy_table(document, table_to_copy, target_table_identifier):
+    # 获取要复制的表格的行数和列数
+    rows = len(table_to_copy.rows)
+    cols = len(table_to_copy.columns)
 
-    # 遍历要复制的表格的行和列，并将内容复制到新表格中
-    for i, row in enumerate(table_rows):
-        for j, cell in enumerate(row.cells):
-            # 将要复制的单元格的内容复制到新表格的对应位置
-            new_table.cell(i, j).text = cell.text
+    # 获取要复制的表格的样式
+    table_style = table_to_copy.style
 
-    # # 在新表格中填入数据
-    # for i, row in enumerate(new_table.rows):
-    #     for j, cell in enumerate(row.cells):
-    #         # 假设data是一个二维列表，包含要填入的数据
-    #         cell.text = str(data[i][j])
+    # 创建新表格
+    new_table = document.add_table(rows=rows, cols=cols)
 
-    # 将新表格插入到原始表格的下一行
-    document.tables[table_index + 1].rows[0].cells[0].tables.append(new_table)
+    # 复制表格样式
+    new_table._element = deepcopy(table_to_copy._element)
+
+    # 设置新表格的样式
+    new_table.style = table_style
+
+    # 复制要复制的表格内容到新表格
+    for i in range(rows):
+        for j in range(cols):
+            copy_cell_style(table_to_copy.cell(i, j), new_table.cell(i, j))
+
+    # 查找目标表格的段落
+    target_paragraph_index = find_paragraph_with_table(document, target_table_identifier)
+
+    if target_paragraph_index >= 0:
+        # 在目标段落的下一个位置插入新表格
+        target_paragraph = document.paragraphs[target_paragraph_index + 1]
+        new_table_paragraph = target_paragraph.insert_paragraph_before(" ")  # 添加空行
+        # new_table_paragraph.add_run().add_break(WD_BREAK.LINE)  # 这也是一种添加空行的方法
+        new_table_paragraph._element.getparent().insert(
+            new_table_paragraph._element.getparent().index(new_table_paragraph._element) + 1, new_table._element
+        )
+
+        tables = document.tables
+        if len(tables) > 0:
+            # 获取最后一个表格
+            last_table = tables[-1]
+
+            # 删除最后一个表格
+            parent = last_table._element.getparent()
+            parent.remove(last_table._element)
+        else:
+            print("文档中没有表格。")
+    else:
+        print("未找到目标表格。")
 
 
 # 填充普通表格
@@ -245,10 +331,37 @@ def find_text_with_fill_table(docx_file, target_text, data_list,
                 for table in all_tables:
                     if table._tbl == ele:
                         table.autofit = False
-                        if target_text == 'Bus Off恢复时间':
-                            copy_table(doc, table, '')
                         print("Find " + target_text)
-                        fill_normal_table(table, data_list)
+                        if 'Bus Off恢复时间' in target_text:
+
+                            new_data_list = split_list(data_list, 4)  # 切分数据
+
+                            if len(data_list) > 4:
+                                for i in range(1, int(len(data_list) / 4)):
+                                    copy_table(doc, table, "8.8 Bus Off恢复时间")
+
+                            # 目标内容，这里是"8.8 Bus Off恢复时间"，可以根据实际需求替换为其他内容
+                            target_content = "8.8 Bus Off恢复时间"
+
+                            # 查找带有目标内容的表格
+                            tables_with_content = find_tables_with_content(doc, target_content)
+
+                            for idx, _table in enumerate(tables_with_content):
+                                fill_normal_table(_table, new_data_list[idx])
+
+                            # if tables_with_content:
+                            #     for idx, _table in enumerate(tables_with_content):
+                            #         print(f"找到符合条件的表格 {idx + 1}：")
+                            #         # 对每个符合条件的表格执行操作，这里只是打印表格内容
+                            #         for row in table.rows:
+                            #             for cell in row.cells:
+                            #                 print(cell.text, end='\t')
+                            #             print()
+                            #         print()
+                            # else:
+                            #     print(f"未找到包含“{target_content}”的表格。")
+                        else:
+                            fill_normal_table(table, data_list)
 
     doc.save(file_path)
 
@@ -504,6 +617,11 @@ def get_list_from_final(final_list):
                         temp_list.append([final_list[_data][2], final_list[_data][3]])
                 data_list.append(temp_list)
     return data_list
+
+
+# 把一个等长的列表切分成若干个等长的子列表
+def split_list(lst, chunk_size):
+    return [lst[i:i + chunk_size] for i in range(0, len(lst), chunk_size)]
 
 
 # list内元素计数
