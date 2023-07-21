@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 # 工具
 from tools import find_text_with_fill_table, process_nested_table, process_table, connect_data_type_zero, \
     replace_at_symbol, get_list_from_final, find_text_with_fill_title, connect_data_type_one, \
-    special_duel_with_title, delete_enter, special_list
+    special_duel_with_title, delete_enter
 
 # 创建 output 文件夹（如果不存在）
 if not os.path.exists('output'):
@@ -66,7 +66,7 @@ for filename in html_files:
         nested_temp_data = process_table(table)
         title_data = nested_temp_data
         replace_at_symbol(title_data)
-        print(title_data)
+        # print(title_data)
 
     elif file_type == 1:
         # 查找第一个带有指定string属性的<span>标签
@@ -79,7 +79,7 @@ for filename in html_files:
         nested_temp_data = process_table(table)
         title_data = nested_temp_data
         replace_at_symbol(title_data)
-        print(title_data)
+        # print(title_data)
 
     elif file_type == 2:
         # 查找第一个带有指定string属性的<font>标签
@@ -115,7 +115,7 @@ for filename in html_files:
 
         final_list = connect_data_type_one(nested_tables_data, title_data)
         data_list = get_list_from_final(final_list)
-        print(data_list)
+        # print(data_list)
 
     elif file_type == 2:
         font = soup.find('font', string='6 物理层', size="5")
@@ -171,8 +171,8 @@ for filename in html_files:
             temp_target_text = target_text.split(" ")[0]
             target_text = target_text_mapping.get(temp_target_text, target_text)
         temp_data = [_data for _data_index, _data in enumerate(data) if _data_index != 0]
-        print(target_text)
-        # print(temp_data)
+        # print(target_text)
+        # print(special_target_result)
         find_text_with_fill_table(output_filepath, target_text, temp_data, output_filepath, j, special_target_result)
         j += 1
 

@@ -22,6 +22,7 @@ def fill_title_table(table, data_list, doc, file_type):
         for col_index, cell in enumerate(row.cells):
             if col_index == 2 and row_index < 77:
                 flag = 1
+                count = 1
 
                 main_text = table.cell(row_index, col_index - 1).text
                 num_text = table.cell(row_index, col_index - 2).text
@@ -53,10 +54,9 @@ def fill_title_table(table, data_list, doc, file_type):
                             else:
                                 compare_set_title_result(cell, data, title_text)
                                 break
-                        elif flag == 1 and (cell.text == '' or cell.text == "N/A"):
+                        elif flag == 1 and (cell.text == '' or cell.text == "N/A") and count >= len(data_list):
                             find_text_with_read_table(doc, main_text)
                             flag = 0
-
                     else:
                         if table.cell(row_index, col_index - 2).text == data[0] \
                                 and cell.text != 'AUTOSAR网络管理测试' and cell.text != '物理层测试' \
@@ -71,10 +71,10 @@ def fill_title_table(table, data_list, doc, file_type):
                                 print("Find and set: " + title_text)
                                 cell.text = data[2]
 
-                        elif flag == 1 and (cell.text == '' or cell.text == "N/A"):
+                        elif flag == 1 and (cell.text == '' or cell.text == "N/A") and count >= len(data_list):
                             find_text_with_read_table(doc, title_text)
                             flag = 0
-
+                    count += 1
                 if cell.text != 'AUTOSAR网络管理测试' and cell.text != '物理层测试' and cell.text != '数据链路层测试' \
                         and cell.text != '网络管理测试' and cell.text != '应用层测试':
                     if cell.text == '':
@@ -238,7 +238,16 @@ def fill_normal_table(table, data_list):
 
 # 填充特殊数据表格
 def fill_special_table(table, data_list):
-    pass
+    for row_index, row in enumerate(table.rows):
+        for col_index, cell in enumerate(row.cells):
+            if row_index >= 2 and col_index == 4:
+                cell.text = "OK"
+                for data in data_list:
+                    if table.cell(row_index, 3).text in data[0]:
+                        cell.text = "NOK"
+                        print("Set fail at cell(" + row_index.__str__() + ", 3)")
+                        break
+                set_result_type(cell)
 
 
 # 预填充表格
@@ -299,7 +308,7 @@ def find_text_with_read_table(doc, target_text):
                 for table in all_tables:
                     if table._tbl == ele and table.cell(0, 0).text != '测试用例章节':
                         pre_fill_normal_table(table)
-                        print("Not find but reset: " + target_text)
+                        print("Not find but reset: " + title_text)
 
 
 # 按标题查找并填充word数据表格
@@ -350,8 +359,15 @@ def find_text_with_fill_table(docx_file, target_text, data_list,
                                         if row_index >= 2 and col_index == 4:
                                             cell.text = "OK"
                                             set_result_type(cell)
-                            if 'fail' in special_list:
-                                fill_special_table(table, data_list)
+                            if 'fail' in special_target_result:
+                                if target_text.split(" ")[0] == '5.17':
+                                    for row_index, row in enumerate(table.rows):
+                                        for col_index, cell in enumerate(row.cells):
+                                            if row_index >= 2 and col_index == 4:
+                                                cell.text = "NOK"
+                                                set_result_type(cell)
+                                else:
+                                    fill_special_table(table, data_list)
 
                         else:
                             fill_normal_table(table, data_list)
@@ -556,16 +572,93 @@ def connect_data_type_zero(table, title_data):
     return final_data
 
 
-# 处理类型1的 HTML 数据，整理后合并成一个final_list
+# 处理类型1和类型0.5的 HTML 数据，整理后合并成一个final_list
 def connect_data_type_one(table, title_data):
     final_data = []
     flag_count = 0  # 计数，第几个测试项目
     skip_index = 2
-    for cell in table:
+    for cell_index, cell in enumerate(table):
         for _cell_index, _cell in enumerate(cell):
             for __cell in _cell:
                 if __cell == 'Timestamp':
+                    is_special = 0
+                    # print(table[cell_index - 3][0][1])
                     temp_data = cell
+                    temp_title = table[cell_index - 3][0][1]
+                    for result in special_list:
+
+                        if result in temp_title and 'CAN总线电压' not in temp_title \
+                                and 'CAN_H与CAN_L的内阻' not in temp_title \
+                                and 'CAN_H与CAN_L之间的差分电阻' not in temp_title \
+                                and '位上升/下降时间' not in temp_title:
+                            # print("special!")
+                            final_data.append(['序号', '题号', '测试大类项目名称', '大类项目测试结果'])
+                            if len(title_data[flag_count]) > 4:
+                                title_data[flag_count].pop()
+                                final_data.append(title_data[flag_count])
+                            else:
+                                final_data.append(title_data[flag_count])
+                            flag_count += 1
+                            if title_data[flag_count - 1][1] == '':
+                                final_data.pop()
+                                temp_title_data, flag_count = next_title_context(title_data, flag_count)
+                                final_data.append(temp_title_data)
+                                flag_count += 1
+                            # print(final_data[len(final_data) - 1])
+                            final_data.append(['测试项目', '测试标准', '测试数值', '测试结果'])
+                            local = []
+                            network = []
+                            diagnosis = []
+                            data = []
+                            tip_list = ['本地唤醒', 'NM唤醒', '诊断唤醒', '数据帧唤醒']
+                            pre_data = ""
+                            # print(temp_data)
+                            for i in range(2, len(temp_data) + 1, 4):
+                                # print(temp_data[i])
+                                if 'DUT无应用报文发送' in temp_data[i][1]:
+                                    for tip_index, tip in enumerate(tip_list):
+                                        if tip in pre_data:
+                                            if tip_index == 0:
+                                                local.append(temp_data[i - 1].pop())
+                                            elif tip_index == 1:
+                                                network.append(temp_data[i - 1].pop())
+                                            elif tip_index == 2:
+                                                diagnosis.append(temp_data[i - 1].pop())
+                                            else:
+                                                data.append(temp_data[i - 1].pop())
+                                if '本地唤醒' in temp_data[i][1]:
+                                    local.append(temp_data[i - 1].pop())
+                                if 'NM唤醒' in temp_data[i][1] or 'NM报文唤醒' in temp_data[i][1]:
+                                    network.append(temp_data[i - 1].pop())
+                                if '诊断唤醒' in temp_data[i][1]:
+                                    diagnosis.append(temp_data[i - 1].pop())
+                                if '数据帧唤醒' in temp_data[i][1]:
+                                    data.append(temp_data[i - 1].pop())
+                                pre_data = temp_data[i][1]
+
+                            for item in local:
+                                if item == 'fail':
+                                    final_data.append(['', '', '本地事件', 'fail'])
+                                    break
+                            for item in network:
+                                if item == 'fail':
+                                    final_data.append(['', '', '网络管理报文', 'fail'])
+                                    break
+                            for item in diagnosis:
+                                if item == 'fail':
+                                    final_data.append(['', '', '诊断报文', 'fail'])
+                                    break
+                            for item in data:
+                                if item == 'fail':
+                                    final_data.append(['', '', '数据帧报文', 'fail'])
+                                    break
+                            # print("---------------")
+                            final_data.append([' '])
+                            final_data.append([' '])
+                            is_special = 1
+                            break
+                    if is_special == 1:
+                        break
                     if skip_index > 0:
                         skip_index -= 1
                     else:
@@ -581,16 +674,16 @@ def connect_data_type_one(table, title_data):
                             temp_title_data, flag_count = next_title_context(title_data, flag_count)
                             final_data.append(temp_title_data)
                             flag_count += 1
-                        print(final_data[len(final_data) - 1])
+                        # print(final_data[len(final_data) - 1])
                         final_data.append(['测试项目', '测试标准', '测试数值', '测试结果'])
                         for i in range(4, len(temp_data) + 1, 4):
                             temp_cell_data = temp_data[i]
                             temp_cell_data.append(temp_data[i - 3].pop())
                             final_data.append(temp_cell_data)
-                            print(temp_cell_data)
-                        print("---------------")
-                    final_data.append([' '])
-                    final_data.append([' '])
+                            # print(temp_cell_data)
+                        # print("---------------")
+                        final_data.append([' '])
+                        final_data.append([' '])
     return final_data
 
 
@@ -615,7 +708,6 @@ def get_list_from_final(final_list):
                 if final_list[data_index + 1][1] in special_list:
                     temp_list.append([final_list[data_index + 1][1] + " " + final_list[data_index + 1][2] +
                                       final_list[data_index + 1][3]])
-                    print("special " + final_list[data_index + 1][1])
                 else:
                     temp_list.append([final_list[data_index + 1][1] + " " + final_list[data_index + 1][2]])
                 for _data in range(data_index + 3, len(final_list) - 1):
