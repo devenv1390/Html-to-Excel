@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 # 工具
 from tools import find_text_with_fill_table, process_nested_table, process_table, connect_data_type_zero, \
     replace_at_symbol, get_list_from_final, find_text_with_fill_title, connect_data_type_one, \
-    special_duel_with_title, delete_enter
+    special_duel_with_title, delete_enter, special_list
 
 # 创建 output 文件夹（如果不存在）
 if not os.path.exists('output'):
@@ -144,7 +144,7 @@ for filename in html_files:
     # 指定要搜索的文本和数据列表
     # 对标题表格进行搜索和填充
     title_target_text = "测试项目总览"
-    # find_text_with_fill_title(model_input_filepath, title_target_text, title_data, output_filepath, file_type)
+    find_text_with_fill_title(model_input_filepath, title_target_text, title_data, output_filepath, file_type)
 
     # 定义目标文本的映射字典
     target_text_mapping = {
@@ -156,7 +156,7 @@ for filename in html_files:
         '6.8.5': '6.8.5 CAN_H对CAN_L短路',
         '6.8.4': '6.8.4 CAN_H与/或CAN_L对地短路',
         '6.8.3': '6.8.3 CAN_H与/或CAN_L对电源短路',
-        '5.17': 'BSM-RMS-NOS-RSS-PBSM-BSM-RMS-NOS-RSS-PBSM-BSM转换测试'
+        '5.17': '5.17 BSM-RMS-NOS-RSS-PBSM-BSM-RMS-NOS-RSS-PBSM-BSM转换测试'
     }
 
     # 执行搜索并填充测试表格
@@ -164,6 +164,7 @@ for filename in html_files:
     print("------ 共有" + len(data_list).__str__() + "个测试数据待处理 ------")
     for data in data_list:
         target_text = data[0][0].split("@")[0]
+        special_target_result = data[0][0].split("@")[1]
         if target_text == '6.4 位上升下降时间':
             target_text = '6.4 位上升/下降时间'
         else:
@@ -172,7 +173,7 @@ for filename in html_files:
         temp_data = [_data for _data_index, _data in enumerate(data) if _data_index != 0]
         print(target_text)
         # print(temp_data)
-        find_text_with_fill_table(output_filepath, target_text, temp_data, output_filepath, j)
+        find_text_with_fill_table(output_filepath, target_text, temp_data, output_filepath, j, special_target_result)
         j += 1
 
     print("------ 完成第" + i.__str__() + "个文件的处理 ------")

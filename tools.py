@@ -8,6 +8,11 @@ from docx.oxml import parse_xml
 from docx.oxml.ns import nsdecls
 from docx.shared import Pt, RGBColor
 
+special_list = ['4.1', '5.2', '5.3', '5.4', '5.5',
+                '5.6', '5.7', '5.8', '5.9', '5.10',
+                '5.11', '5.12', '5.13', '5.14',
+                '5.15', '5.16', '5.17']
+
 
 # 填充标题表格
 def fill_title_table(table, data_list, doc, file_type):
@@ -15,7 +20,7 @@ def fill_title_table(table, data_list, doc, file_type):
     print("------ 正在处理标题数据 ------")
     for row_index, row in enumerate(table.rows):
         for col_index, cell in enumerate(row.cells):
-            if col_index == 2:
+            if col_index == 2 and row_index < 77:
                 flag = 1
 
                 main_text = table.cell(row_index, col_index - 1).text
@@ -56,6 +61,7 @@ def fill_title_table(table, data_list, doc, file_type):
                         if table.cell(row_index, col_index - 2).text == data[0] \
                                 and cell.text != 'AUTOSAR网络管理测试' and cell.text != '物理层测试' \
                                 and cell.text != '数据链路层测试' and cell.text != '网络管理测试' and cell.text != '应用层测试':
+
                             if data[0] == '6.1' or data[0] == '6.2' or data[0] == '6.3' or data[0] == '6.4':
                                 if data[1] in table.cell(row_index, col_index - 1).text:
                                     print("Find and set: " + title_text)
@@ -124,7 +130,6 @@ def copy_cell_style(source_cell, target_cell):
 
 # 将带有相同单元格信息的表格存入一个list中
 def find_tables_with_content(doc, target_content):
-
     tables_with_content = []  # 存储符合条件的表格的列表
 
     # 遍历文档中的所有表格
@@ -231,6 +236,11 @@ def fill_normal_table(table, data_list):
                     set_result_type(cell)
 
 
+# 填充特殊数据表格
+def fill_special_table(table, data_list):
+    pass
+
+
 # 预填充表格
 def pre_fill_normal_table(table):
     for row_index, row in enumerate(table.rows):
@@ -294,7 +304,7 @@ def find_text_with_read_table(doc, target_text):
 
 # 按标题查找并填充word数据表格
 def find_text_with_fill_table(docx_file, target_text, data_list,
-                              file_path, index):
+                              file_path, index, special_target_result):
     doc = Document(docx_file)
 
     paragraphs = doc.paragraphs
@@ -330,6 +340,19 @@ def find_text_with_fill_table(docx_file, target_text, data_list,
 
                             for idx, _table in enumerate(tables_with_content):
                                 fill_normal_table(_table, new_data_list[idx])
+                        elif (target_text.split(" ")[0] in special_list) and ("6.4 位上升/下降时间" != target_text):
+
+                            print("Get special title " + target_text)
+
+                            if 'pass' in special_target_result:
+                                for row_index, row in enumerate(table.rows):
+                                    for col_index, cell in enumerate(row.cells):
+                                        if row_index >= 2 and col_index == 4:
+                                            cell.text = "OK"
+                                            set_result_type(cell)
+                            if 'fail' in special_list:
+                                fill_special_table(table, data_list)
+
                         else:
                             fill_normal_table(table, data_list)
 
@@ -589,7 +612,12 @@ def get_list_from_final(final_list):
         temp_list = []
         if len(data) > 2:
             if data[1] == '题号':
-                temp_list.append([final_list[data_index + 1][1] + " " + final_list[data_index + 1][2]])
+                if final_list[data_index + 1][1] in special_list:
+                    temp_list.append([final_list[data_index + 1][1] + " " + final_list[data_index + 1][2] +
+                                      final_list[data_index + 1][3]])
+                    print("special " + final_list[data_index + 1][1])
+                else:
+                    temp_list.append([final_list[data_index + 1][1] + " " + final_list[data_index + 1][2]])
                 for _data in range(data_index + 3, len(final_list) - 1):
                     if final_list[_data] == [' ']:
                         break
