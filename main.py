@@ -1,5 +1,5 @@
 import os
-import re
+import time
 
 from bs4 import BeautifulSoup
 
@@ -15,6 +15,7 @@ if not os.path.exists('output'):
 # 获取 input 文件夹下的所有 HTML 文件
 html_files = os.listdir('html_input')
 docx_file = os.listdir('model_input')
+start_all_time = time.time()
 print("------ 共有" + len(html_files).__str__() + "个文件待处理 ------")
 
 # 文件数量迭代器
@@ -22,6 +23,7 @@ i = 1
 
 # 在所有 HTML 文件中遍历处理
 for filename in html_files:
+    start_time = time.time()
     print(" ")
     print("------ 正在处理第" + i.__str__() + "个文件 ------")
 
@@ -180,8 +182,14 @@ for filename in html_files:
         j += 1
 
     print("------ 完成第" + i.__str__() + "个文件的处理 ------")
+    end_time = time.time()
+    elapsed_time = end_time - start_time
     i += 1
+    print(f"------ 耗时: {elapsed_time:.2f} 秒 ------")
     print(" ")
 
 print("------ 已处理完成所有文件 ------")
-# os.system("pause")
+end_all_time = time.time()
+elapsed_all_time = end_all_time - start_all_time
+print(f"------ 总耗时: {elapsed_all_time:.2f} 秒 ------")
+os.system("pause")
