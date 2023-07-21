@@ -56,6 +56,7 @@ def fill_title_table(table, data_list, doc, file_type):
                                 break
                         elif flag == 1 and (cell.text == '' or cell.text == "N/A") and count >= len(data_list):
                             find_text_with_read_table(doc, main_text)
+                            print("Not find but reset: " + title_text)
                             flag = 0
                     else:
                         if table.cell(row_index, col_index - 2).text == data[0] \
@@ -73,6 +74,7 @@ def fill_title_table(table, data_list, doc, file_type):
 
                         elif flag == 1 and (cell.text == '' or cell.text == "N/A") and count >= len(data_list):
                             find_text_with_read_table(doc, title_text)
+                            print("Not find but reset: " + title_text)
                             flag = 0
                     count += 1
                 if cell.text != 'AUTOSAR网络管理测试' and cell.text != '物理层测试' and cell.text != '数据链路层测试' \
@@ -308,7 +310,6 @@ def find_text_with_read_table(doc, target_text):
                 for table in all_tables:
                     if table._tbl == ele and table.cell(0, 0).text != '测试用例章节':
                         pre_fill_normal_table(table)
-                        print("Not find but reset: " + title_text)
 
 
 # 按标题查找并填充word数据表格
@@ -563,7 +564,7 @@ def connect_data_type_zero(table, title_data):
                     flag_count += 1
                     final_data.append(['测试项目', '测试标准', '测试数值', '测试结果'])
                     for i in range(4, len(temp_data) + 1, 4):
-                        print(temp_data)
+                        # print(temp_data)
                         temp_cell_data = temp_data[i]
                         temp_cell_data.append(temp_data[i - 3].pop())
                         final_data.append(temp_cell_data)
