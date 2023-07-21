@@ -22,7 +22,6 @@ def fill_title_table(table, data_list, doc, file_type):
         for col_index, cell in enumerate(row.cells):
             if col_index == 2 and row_index < 77:
                 flag = 1
-                count = 1
 
                 main_text = table.cell(row_index, col_index - 1).text
                 num_text = table.cell(row_index, col_index - 2).text
@@ -54,9 +53,9 @@ def fill_title_table(table, data_list, doc, file_type):
                             else:
                                 compare_set_title_result(cell, data, title_text)
                                 break
-                        elif flag == 1 and (cell.text == '' or cell.text == "N/A") and count >= len(data_list):
+                        elif flag == 1 and (cell.text == '' or cell.text == "N/A"):
                             find_text_with_read_table(doc, main_text)
-                            print("Not find but reset: " + title_text)
+                            # print("Not find but reset: " + title_text)
                             flag = 0
                     else:
                         if table.cell(row_index, col_index - 2).text == data[0] \
@@ -72,11 +71,10 @@ def fill_title_table(table, data_list, doc, file_type):
                                 print("Find and set: " + title_text)
                                 cell.text = data[2]
 
-                        elif flag == 1 and (cell.text == '' or cell.text == "N/A") and count >= len(data_list):
+                        elif flag == 1 and (cell.text == '' or cell.text == "N/A"):
                             find_text_with_read_table(doc, title_text)
-                            print("Not find but reset: " + title_text)
                             flag = 0
-                    count += 1
+
                 if cell.text != 'AUTOSAR网络管理测试' and cell.text != '物理层测试' and cell.text != '数据链路层测试' \
                         and cell.text != '网络管理测试' and cell.text != '应用层测试':
                     if cell.text == '':
