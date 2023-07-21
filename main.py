@@ -164,7 +164,10 @@ for filename in html_files:
     print("------ 共有" + len(data_list).__str__() + "个测试数据待处理 ------")
     for data in data_list:
         target_text = data[0][0].split("@")[0]
-        special_target_result = data[0][0].split("@")[1]
+        if file_type == 1 or file_type == 0.5:
+            special_target_result = data[0][0].split("@")[1]
+        else:
+            special_target_result = ''
         if target_text == '6.4 位上升下降时间':
             target_text = '6.4 位上升/下降时间'
         else:
