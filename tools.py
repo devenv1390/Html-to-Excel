@@ -1,6 +1,6 @@
+import sys
 from copy import deepcopy
 
-import docx
 from docx import Document
 from docx.enum.table import WD_CELL_VERTICAL_ALIGNMENT
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT, WD_BREAK
@@ -13,18 +13,6 @@ special_list = ['4.1', '5.2', '5.3', '5.4', '5.5',
                 '5.6', '5.7', '5.8', '5.9', '5.10',
                 '5.11', '5.12', '5.13', '5.14',
                 '5.15', '5.16', '5.17']
-
-
-def print_info(text):
-    print(Fore.GREEN + text + Style.RESET_ALL)
-
-
-def print_warning(text):
-    print(Fore.YELLOW + text + Style.RESET_ALL)
-
-
-def print_error(text):
-    print(Fore.RED + text + Style.RESET_ALL)
 
 
 # 填充标题表格
@@ -77,11 +65,11 @@ def fill_title_table(table, data_list, doc, file_type):
 
                             if data[0] == '6.1' or data[0] == '6.2' or data[0] == '6.3' or data[0] == '6.4':
                                 if data[1] in table.cell(row_index, col_index - 1).text:
-                                    print_info(f"Find and set: {title_text}")
+                                    print(f"Find and set: {title_text}")
                                     cell.text = data[2]
                                     break
                             else:
-                                print_info(f"Find and set: {title_text}")
+                                print(f"Find and set: {title_text}")
                                 cell.text = data[2]
 
                         elif flag == 1 and (cell.text == '' or cell.text == "N/A"):
@@ -100,7 +88,7 @@ def fill_title_table(table, data_list, doc, file_type):
 
 # 判断后填入标题结果
 def compare_set_title_result(cell, data, title_text):
-    print_info(f"Find and set: {title_text}")
+    print(f"Find and set: {title_text}")
     if len(data) > 4:
         if data[4] == 'warning':
             cell.text = "N/A"
@@ -204,9 +192,9 @@ def copy_table(document, table_to_copy, target_table_identifier):
             parent = last_table._element.getparent()
             parent.remove(last_table._element)
         else:
-            print_error("文档中没有表格。")
+            print("文档中没有表格。")
     else:
-        print_error("未找到目标表格。")
+        print("未找到目标表格。")
 
 
 # 填充普通数据表格
@@ -258,7 +246,7 @@ def fill_special_table(table, data_list):
                 for data in data_list:
                     if table.cell(row_index, 3).text in data[0]:
                         cell.text = "NOK"
-                        print_error(f"Set fail at cell({row_index}, 3)")
+                        print(f"Set fail at cell({row_index}, 3)")
                         break
                 set_result_type(cell)
 
@@ -344,7 +332,7 @@ def find_text_with_fill_table(docx_file, target_text, data_list,
                 for table in all_tables:
                     if table._tbl == ele:
                         table.autofit = False
-                        print_info(f"Find : {target_text}")
+                        print(f"Find : {target_text}")
                         if 'Bus Off恢复时间' in target_text:
 
                             new_data_list = split_list(data_list, 4)  # 切分数据
@@ -363,7 +351,7 @@ def find_text_with_fill_table(docx_file, target_text, data_list,
                                 fill_normal_table(_table, new_data_list[idx])
                         elif (target_text.split(" ")[0] in special_list) and ("6.4 位上升/下降时间" != target_text):
 
-                            print_warning("Get special title {target_text}")
+                            print(f"Get special title {target_text}")
 
                             if 'pass' in special_target_result:
                                 for row_index, row in enumerate(table.rows):
