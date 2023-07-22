@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 # 工具
 from tools import find_text_with_fill_table, process_nested_table, process_table, connect_data_type_zero, \
     replace_at_symbol, get_list_from_final, find_text_with_fill_title, connect_data_type_one, \
-    special_duel_with_title, delete_enter
+    special_duel_with_title, delete_enter, print_info, print_warning, print_error
 
 # 创建 output 文件夹（如果不存在）
 if not os.path.exists('output'):
@@ -16,16 +16,13 @@ if not os.path.exists('output'):
 html_files = os.listdir('html_input')
 docx_file = os.listdir('model_input')
 start_all_time = time.time()
-print("------ 共有" + len(html_files).__str__() + "个文件待处理 ------")
-
-# 文件数量迭代器
-i = 1
+print_info(f"------ 共有 {len(html_files)} 个文件待处理 ------")
 
 # 在所有 HTML 文件中遍历处理
-for filename in html_files:
+for i, filename in enumerate(html_files, start=1):
     start_time = time.time()
-    print(" ")
-    print("------ 正在处理第" + i.__str__() + "个文件 ------")
+    print("\n------ 正在处理第{i}个文件 ------".format(i=i))
+    print_warning(f"------ 文件名为：{filename} ------")
 
     # 拼接文件路径
     html_input_filepath = os.path.join('html_input', filename)  # HTML 文件放置的文件夹
@@ -53,7 +50,7 @@ for filename in html_files:
     elif soup.find('h1') is not None:
         file_type = 2
 
-    print("此次导入的HTML文件类型为 " + file_type.__str__() + " 类型")
+    print_info(f"------ 此次导入的HTML文件类型为 {file_type} 类型 ------")
 
     # 根据不同种类的 HTML 采用不同的标题表格和实验内容表格解析方式
     title_data = []
@@ -181,15 +178,14 @@ for filename in html_files:
         find_text_with_fill_table(output_filepath, target_text, temp_data, output_filepath, j, special_target_result)
         j += 1
 
-    print("------ 完成第" + i.__str__() + "个文件的处理 ------")
+    print_info(f"------ 完成第{i}个文件的处理 ------")
     end_time = time.time()
     elapsed_time = end_time - start_time
-    i += 1
-    print(f"------ 耗时: {elapsed_time:.2f} 秒 ------")
+    print_error(f"------ 耗时: {elapsed_time:.2f} 秒 ------")
     print(" ")
 
-print("------ 已处理完成所有文件 ------")
+print_info("------ 已处理完成所有文件 ------")
 end_all_time = time.time()
 elapsed_all_time = end_all_time - start_all_time
-print(f"------ 总耗时: {elapsed_all_time:.2f} 秒 ------")
+print_error(f"------ 总耗时: {elapsed_all_time:.2f} 秒 ------")
 os.system("pause")
