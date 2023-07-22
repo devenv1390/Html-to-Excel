@@ -158,6 +158,9 @@ for i, filename in enumerate(html_files, start=1):
         '5.17': '5.17 BSM-RMS-NOS-RSS-PBSM-BSM-RMS-NOS-RSS-PBSM-BSM转换测试'
     }
 
+    if file_type == 2:
+        continue
+
     # 执行搜索并填充测试表格
     j = 1  # 测试数据数量迭代器
     print("------ 共有" + len(data_list).__str__() + "个测试数据待处理 ------")
