@@ -333,16 +333,16 @@ def find_text_with_fill_table(docx_file, target_text, data_list,
                     if table._tbl == ele:
                         table.autofit = False
                         print(f"Find : {target_text}")
-                        if 'Bus Off恢复时间' in target_text:
+                        if 'Bus Off恢复时间' in target_text or '网络唤醒发送使能时间' in target_text:
 
                             new_data_list = split_list(data_list, 4)  # 切分数据
 
                             if len(data_list) > 4:
                                 for i in range(1, int(len(data_list) / 4)):
-                                    copy_table(doc, table, "8.8 Bus Off恢复时间")
+                                    copy_table(doc, table, target_text)
 
                             # 目标内容，这里是"8.8 Bus Off恢复时间"，可以根据实际需求替换为其他内容
-                            target_content = "8.8 Bus Off恢复时间"
+                            target_content = target_text
 
                             # 查找带有目标内容的表格
                             tables_with_content = find_tables_with_content(doc, target_content)
