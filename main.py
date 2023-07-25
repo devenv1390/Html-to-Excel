@@ -124,8 +124,8 @@ for i, filename in enumerate(html_files, start=1):
 
         result_index = 0
         for table in tables:
-            print(table.text)
-            print("---------------")
+            # print(table.text)
+            # print("---------------")
             temp_result.append(delete_enter(table))
 
         for data in title_data:
@@ -138,7 +138,7 @@ for i, filename in enumerate(html_files, start=1):
                     data[2] = temp_result[result_index][1]
                 result_index += 1
 
-        print(title_data)
+        # print(title_data)
 
     # 指定要搜索的文本和数据列表
     # 对标题表格进行搜索和填充
