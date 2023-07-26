@@ -582,9 +582,12 @@ def connect_data_type_one(table, title_data):
             for __cell in _cell:
                 if __cell == 'Timestamp':
                     is_special = 0
-                    # print(table[cell_index - 3][0][1])
+                    # print(table[cell_index - 3])
                     temp_data = cell
-                    temp_title = table[cell_index - 3][0][1]
+                    if cell_index > 20:
+                        temp_title = table[cell_index - 5][0][1]
+                    else:
+                        temp_title = table[cell_index - 3][0][1]
                     for result in special_list:
 
                         if result in temp_title and 'CAN总线电压' not in temp_title \

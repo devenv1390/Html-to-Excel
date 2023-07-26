@@ -1,6 +1,8 @@
 import os
 
+import docx
 from docx import Document
+from docx.table import Table
 
 
 def remove_tables_from_docx(input_file_path, output_file_path):
@@ -9,16 +11,20 @@ def remove_tables_from_docx(input_file_path, output_file_path):
         doc = Document(input_file_path)
 
         title_data = find_title_table(doc)
-        # print(title_data)
+        print(title_data)
+
         for target in title_data:
+            print(target)
             find_and_delete_table(doc, target)
 
         # 将修改后的文档保存到输出文件
         doc.save(output_file_path)
 
-        print("Tables removed successfully.")
+        # print("成功删除表格")
+        print("当前文件处理完成")
+        print("==================")
     except Exception as e:
-        print("An error occurred:", e)
+        print("发生错误，报错信息为:", e)
 
 
 # 查找并填充word标题表格
@@ -53,16 +59,16 @@ def find_title_table(doc):
 def find_and_delete_table(doc, target_text):
     paragraphs = doc.paragraphs
     all_tables = doc.tables
+    target_text = target_text.encode('utf-8').decode('utf-8')
 
-    for aPara in paragraphs:  # 遍历段落找表格
-        # print(aPara.text)
+    for aPara in paragraphs:
         if target_text in aPara.text:
             ele = aPara._p.getnext()
-            while ele.tag != '' and ele.tag[-3:] != 'tbl':
+            while ele is not None and ele.tag != '' and ele.tag[-3:] != 'tbl':
                 ele = ele.getnext()
-            if ele.tag != '':
+            if ele is not None and ele.tag != '':
                 for table in all_tables:
-                    if table._tbl == ele:
+                    if table._tbl == ele and table.cell(0, 0).text != '测试用例章节':
                         table._element.getparent().remove(table._element)
 
 
@@ -74,5 +80,4 @@ if __name__ == "__main__":
         input_file_path = os.path.join('output', filename)
         output_file_path = os.path.join('output', filename)
         remove_tables_from_docx(input_file_path, output_file_path)
-        print("当前文件处理完成")
-        print("==================")
+    # os.system("pause")
