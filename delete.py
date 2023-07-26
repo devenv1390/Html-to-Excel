@@ -11,16 +11,16 @@ def remove_tables_from_docx(input_file_path, output_file_path):
         doc = Document(input_file_path)
 
         title_data = find_title_table(doc)
-        print(title_data)
+        # print(title_data)
 
         for target in title_data:
-            print(target)
             find_and_delete_table(doc, target)
+            print(f"已删除表格 {target}")
 
         # 将修改后的文档保存到输出文件
         doc.save(output_file_path)
 
-        # print("成功删除表格")
+        print(" ")
         print("当前文件处理完成")
         print("==================")
     except Exception as e:
