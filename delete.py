@@ -1,8 +1,10 @@
 import os
 
-import docx
 from docx import Document
-from docx.table import Table
+
+special_list = ['AUTOSAR网络管理测试', '物理层测试', '数据链路层测试',
+                '网络管理测试', '应用层测试', 'CAN总线电压',
+                '故障管理', '通信电压', 'CAN_H与CAN_L的内阻']
 
 
 def remove_tables_from_docx(input_file_path, output_file_path):
@@ -47,9 +49,7 @@ def find_title_table(doc):
                             for col_index, cell in enumerate(row.cells):
                                 if col_index == 1 and 1 < row_index < 77:
                                     temp_cell = table.cell(row_index, col_index + 1)
-                                    if cell.text != 'AUTOSAR网络管理测试' and cell.text != '物理层测试' \
-                                            and cell.text != '数据链路层测试' and cell.text != '网络管理测试' \
-                                            and cell.text != '应用层测试':
+                                    if cell.text not in special_list:
                                         if temp_cell.text == "N/A":
                                             title_data.append(cell.text)
     return title_data
@@ -70,6 +70,8 @@ def find_and_delete_table(doc, target_text):
                 for table in all_tables:
                     if table._tbl == ele and table.cell(0, 0).text != '测试用例章节':
                         table._element.getparent().remove(table._element)
+                        return
+
 
 
 if __name__ == "__main__":
