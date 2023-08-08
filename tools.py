@@ -100,6 +100,8 @@ def compare_set_title_result(cell, data, title_text):
     else:
         if data[3] == 'pass':
             cell.text = "OK"
+        elif data[3] == 'warning':
+            cell.text = "N/A"
         else:
             cell.text = "NOK"
 
@@ -475,6 +477,8 @@ def replace_at_symbol(data_list):
             result = result + item + "-"
         res = result[:-1]
         data[2] = res
+        if data[4] == 'warning':
+            data[3] = 'warning'
 
 
 # 去除换行符

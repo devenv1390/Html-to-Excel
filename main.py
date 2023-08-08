@@ -24,7 +24,7 @@ try:
     # 在所有 HTML 文件中遍历处理
     for i, filename in enumerate(html_files, start=1):
         start_time = time.time()
-        print("\n------ 正在处理第{i}个文件 ------".format(i=i))
+        print(f"\n------ 正在处理第{i}个文件 ------")
         print(f"------ 文件名为：{filename} ------")
 
         # 拼接文件路径
@@ -117,7 +117,7 @@ try:
 
             final_list = connect_data_type_one(nested_tables_data, title_data)
             data_list = get_list_from_final(final_list)
-            print(data_list)
+            # print(data_list)
 
         elif file_type == 2:
             font = soup.find('font', string='6 物理层', size="5")
