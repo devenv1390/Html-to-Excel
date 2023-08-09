@@ -94,20 +94,45 @@ try:
 
         # 新建一个list存储修改的数据
         final_list = []
+        data_list = []
 
         # 处理多级嵌套表格数据
         nested_tables_data = []
 
         if file_type == 0:
-            tables = soup.find_all('table')
+            a = soup.find_all('a')
+            for _a in a:
+                if "Test Case" not in _a.text:
+                    continue
+                for data in title_data:
+                    if data[2] in _a.text:
+                        # print("find " + _a.text)
+                        div = _a.find_next('div', {'class': 'Indentation'})
+                        table = div.find('table', {'class': 'ResultTable'})
+                        if not table:
+                            # print("null")
+                            data[3] = 'warning'
+                        else:
+                            table_data = process_nested_table(table)
+                            nested_tables_data.append(table_data)
+                            title = data[1].__str__() + " " + data[2].__str__()
+                            final_list.append([title])
 
-            for table in tables:
-                table_data = process_nested_table(table)
-                nested_tables_data.append(table_data)
-
-            final_list = connect_data_type_zero(nested_tables_data, title_data)
-            data_list = get_list_from_final(final_list)
-
+                            for j in range(4, len(table_data) + 1, 4):
+                                temp_cell_data = table_data[j]
+                                temp_cell_data.append(table_data[j - 3].pop())
+                                final_list.append([temp_cell_data[2],temp_cell_data[3]])
+                            data_list.append(final_list)
+                            final_list = []
+                        break
+            # tables = soup.find_all('table')
+            #
+            # for table in tables:
+            #     table_data = process_nested_table(table)
+            #     nested_tables_data.append(table_data)
+            #
+            # final_list = connect_data_type_zero(nested_tables_data, title_data)
+            # data_list = get_list_from_final(final_list)
         elif file_type == 1 or file_type == 0.5:
             tables = soup.find_all('table')
 

@@ -95,6 +95,8 @@ def compare_set_title_result(cell, data, title_text):
         else:
             if data[3] == 'pass':
                 cell.text = "OK"
+            elif data[3] == 'warning':
+                cell.text = "N/A"
             else:
                 cell.text = "NOK"
     else:
@@ -398,6 +400,7 @@ def find_text_with_fill_title(docx_file, title_target_text, title_data_list, fil
                     if table._tbl == ele:
                         table.autofit = False
                         fill_title_table(table, title_data_list, doc, file_type)
+                        break
 
     doc.save(file_path)
 
