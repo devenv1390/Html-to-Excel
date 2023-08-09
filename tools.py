@@ -553,30 +553,17 @@ def special_duel_with_table(table, title_data):
 
 
 # 处理类型0的 HTML 数据，整理后合并成一个final_list
-def connect_data_type_zero(table, title_data):
-    final_data = []
-    flag_count = 0  # 计数，第几个测试项目
-    for cell in table:
-        for _cell in cell:
-            for __cell in _cell:
-                if __cell == 'Timestamp':
-                    temp_data = cell
-                    final_data.append(['序号', '题号', '测试大类项目名称', '大类项目测试结果'])
-                    if len(title_data[flag_count]) > 4:
-                        title_data[flag_count].pop()
-                        final_data.append(title_data[flag_count])
-                    else:
-                        final_data.append(title_data[flag_count])
-                    flag_count += 1
-                    final_data.append(['测试项目', '测试标准', '测试数值', '测试结果'])
-                    for i in range(4, len(temp_data) + 1, 4):
-                        # print(temp_data)
-                        temp_cell_data = temp_data[i]
-                        temp_cell_data.append(temp_data[i - 3].pop())
-                        final_data.append(temp_cell_data)
-                    final_data.append([' '])
-                    final_data.append([' '])
-    return final_data
+def from_final_get_data(table, data):
+    final_list = []
+    table_data = process_nested_table(table)
+    title = data[1].__str__() + " " + data[2].__str__()
+    final_list.append([title])
+
+    for j in range(4, len(table_data) + 1, 4):
+        temp_cell_data = table_data[j]
+        temp_cell_data.append(table_data[j - 3].pop())
+        final_list.append([temp_cell_data[2], temp_cell_data[3]])
+    return final_list
 
 
 # 处理类型1和类型0.5的 HTML 数据，整理后合并成一个final_list
@@ -743,6 +730,32 @@ def count_element(lst, target):
         elif item == target:
             count += 1
     return count
+
+# # 处理类型0的 HTML 数据，整理后合并成一个final_list
+# def connect_data_type_zero(table, title_data):
+#     final_data = []
+#     flag_count = 0  # 计数，第几个测试项目
+#     for cell in table:
+#         for _cell in cell:
+#             for __cell in _cell:
+#                 if __cell == 'Timestamp':
+#                     temp_data = cell
+#                     final_data.append(['序号', '题号', '测试大类项目名称', '大类项目测试结果'])
+#                     if len(title_data[flag_count]) > 4:
+#                         title_data[flag_count].pop()
+#                         final_data.append(title_data[flag_count])
+#                     else:
+#                         final_data.append(title_data[flag_count])
+#                     flag_count += 1
+#                     final_data.append(['测试项目', '测试标准', '测试数值', '测试结果'])
+#                     for i in range(4, len(temp_data) + 1, 4):
+#                         # print(temp_data)
+#                         temp_cell_data = temp_data[i]
+#                         temp_cell_data.append(temp_data[i - 3].pop())
+#                         final_data.append(temp_cell_data)
+#                     final_data.append([' '])
+#                     final_data.append([' '])
+#     return final_data
 
 # #将表格填充到EXCEL中的cell
 # def fill_cell(ws):

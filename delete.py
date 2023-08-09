@@ -73,7 +73,6 @@ def find_and_delete_table(doc, target_text):
                         return
 
 
-
 if __name__ == "__main__":
     docx_file = os.listdir('output')
     # 在所有 docx 文件中遍历处理

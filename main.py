@@ -4,9 +4,9 @@ import time
 from bs4 import BeautifulSoup
 
 # 工具
-from tools import find_text_with_fill_table, process_nested_table, process_table, connect_data_type_zero, \
+from tools import find_text_with_fill_table, process_table, \
     replace_at_symbol, get_list_from_final, find_text_with_fill_title, connect_data_type_one, \
-    special_duel_with_title, delete_enter
+    special_duel_with_title, delete_enter, from_final_get_data
 
 # 创建 output 文件夹（如果不存在）
 if not os.path.exists('output'):
@@ -113,18 +113,9 @@ try:
                             # print("null")
                             data[3] = 'warning'
                         else:
-                            table_data = process_nested_table(table)
-                            nested_tables_data.append(table_data)
-                            title = data[1].__str__() + " " + data[2].__str__()
-                            final_list.append([title])
-
-                            for j in range(4, len(table_data) + 1, 4):
-                                temp_cell_data = table_data[j]
-                                temp_cell_data.append(table_data[j - 3].pop())
-                                final_list.append([temp_cell_data[2],temp_cell_data[3]])
-                            data_list.append(final_list)
-                            final_list = []
+                            data_list.append(from_final_get_data(table, data))
                         break
+
             # tables = soup.find_all('table')
             #
             # for table in tables:
@@ -133,6 +124,7 @@ try:
             #
             # final_list = connect_data_type_zero(nested_tables_data, title_data)
             # data_list = get_list_from_final(final_list)
+
         elif file_type == 1 or file_type == 0.5:
             tables = soup.find_all('table')
 
