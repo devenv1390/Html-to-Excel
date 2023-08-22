@@ -42,6 +42,7 @@ try:
         # HTML 文件的种类
         file_type = 0
 
+        # 找标签
         if soup.find('table', class_='HeadingTable') is not None:
             file_type = 0
             if soup.find('big', string='Preparation of Test Module') is not None:
@@ -99,6 +100,7 @@ try:
         # 处理多级嵌套表格数据
         nested_tables_data = []
 
+        # 处理 HTML 表格
         if file_type == 0:
             a = soup.find_all('a')
             for _a in a:
@@ -178,6 +180,7 @@ try:
             '5.17': '5.17 BSM-RMS-NOS-RSS-PBSM-BSM-RMS-NOS-RSS-PBSM-BSM转换测试'
         }
 
+        # 暂时没做类型2 HTML 文件的处理
         if file_type == 2:
             continue
 

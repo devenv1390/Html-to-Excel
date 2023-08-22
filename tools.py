@@ -24,25 +24,26 @@ def fill_title_table(table, data_list, doc, file_type):
             if col_index == 2 and row_index < 77:
                 flag = 1
 
+                # 标题文字拼接
                 main_text = table.cell(row_index, col_index - 1).text
                 num_text = table.cell(row_index, col_index - 2).text
                 title_text = num_text + " " + main_text
 
                 for data in data_list:
                     if file_type == 0 or file_type == 1 or file_type == 0.5:
+                        # 判断特殊标题
                         if table.cell(row_index, col_index - 2).text == data[1] \
                                 and cell.text != 'AUTOSAR网络管理测试' and cell.text != '物理层测试' \
                                 and cell.text != '数据链路层测试' and cell.text != '网络管理测试' and cell.text != '应用层测试':
-
+                            # 存在重复，需要特殊处理的标题
                             if data[1] == '6.1' or data[1] == '6.2' or data[1] == '6.3' or data[1] == '6.4':
 
                                 if (file_type == 1 or file_type == 0.5) and (data[1] == '6.1' or data[1] == '6.2'):
                                     if ('Busoff下NM状态转换' in data[2] or '高负载下的NM状态转换测试' in data[2]) \
-                                            and (
-                                            main_text == 'BUS-OFF下NM状态转换测试' or main_text == '高负载下的NM状态转换测试'):
+                                            and (main_text == 'BUS-OFF下NM状态转换测试' or main_text == '高负载下的NM状态转换测试'):
                                         compare_set_title_result(cell, data, title_text)
                                         break
-
+                                # 存在重复，需要特殊处理的标题
                                 elif file_type == 0 and data[1] == '6.4':
                                     if '位上升' in data[2] and '下降时间' in data[2] and main_text == '位上升/下降时间':
                                         compare_set_title_result(cell, data, title_text)
@@ -51,13 +52,16 @@ def fill_title_table(table, data_list, doc, file_type):
                                 elif data[2] in table.cell(row_index, col_index - 1).text:
                                     compare_set_title_result(cell, data, title_text)
                                     break
+                            # 一般情况
                             else:
                                 compare_set_title_result(cell, data, title_text)
                                 break
+                        # 对结果为N/A的表格进行预填充
                         elif flag == 1 and (cell.text == '' or cell.text == "N/A"):
                             find_text_with_read_table(doc, main_text)
                             # print("Not find but reset: " + title_text)
                             flag = 0
+                    # 对类型2的 HTML 的标题表格进行填充
                     else:
                         if table.cell(row_index, col_index - 2).text == data[0] \
                                 and cell.text != 'AUTOSAR网络管理测试' and cell.text != '物理层测试' \
@@ -345,7 +349,7 @@ def find_text_with_fill_table(docx_file, target_text, data_list,
                                 for i in range(1, int(len(data_list) / 4)):
                                     copy_table(doc, table, target_text)
 
-                            # 目标内容，这里是"8.8 Bus Off恢复时间"，可以根据实际需求替换为其他内容
+                            # 目标内容
                             target_content = target_text
 
                             # 查找带有目标内容的表格
@@ -415,7 +419,7 @@ def find_same_context(cell, target_list):
     return False
 
 
-# 解析HTML中的表格信息
+# 解析 HTML 中的数据表格信息
 def process_nested_table(table):
     nested_data = []
 
@@ -447,7 +451,7 @@ def process_nested_table(table):
     return nested_data
 
 
-# 解析HTML中的标题信息
+# 解析 HTML 中的标题表格信息
 def process_table(table):
     data = []
 

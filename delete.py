@@ -7,6 +7,7 @@ special_list = ['AUTOSAR网络管理测试', '物理层测试', '数据链路层
                 '故障管理', '通信电压', 'CAN_H与CAN_L的内阻']
 
 
+# 删除空表格
 def remove_tables_from_docx(input_file_path, output_file_path):
     try:
         # 加载输入的docx文件
@@ -29,7 +30,7 @@ def remove_tables_from_docx(input_file_path, output_file_path):
         print("发生错误，报错信息为:", e)
 
 
-# 查找并填充word标题表格
+# 查找空表格
 def find_title_table(doc):
     title_data = []
 
